@@ -1,0 +1,136 @@
+package finalproject.models;
+
+
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import javax.persistence.*;
+import javax.xml.crypto.Data;
+import java.util.Date;
+
+@Entity
+@Table(name = "auth_user")
+
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+    private String email;
+    @JsonManagedReference
+    @OneToOne(cascade = CascadeType.ALL,mappedBy = "user",fetch = FetchType.LAZY)
+    private Profile profile;
+    @JsonIgnore
+    private String password;
+    private boolean is_active;
+    private boolean is_superuser;
+    private Date last_login;
+    private Date created;
+    private Date updated;
+
+    public User() {
+    }
+
+    public User(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    public User(int id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated) {
+        this.id = id;
+        this.email = email;
+        this.profile = profile;
+        this.password = password;
+        this.is_active = is_active;
+        this.is_superuser = is_superuser;
+        this.last_login = last_login;
+        this.created = created;
+        this.updated = updated;
+    }
+
+    public User(int id, String email, Profile profile, String password) {
+        this.id = id;
+        this.email = email;
+        this.profile = profile;
+        this.password = password;
+    }
+
+    public User(String email, String password, boolean is_active, boolean is_superuser) {
+        this.email = email;
+        this.password = password;
+        this.is_active = is_active;
+        this.is_superuser = is_superuser;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public boolean isIs_active() {
+        return is_active;
+    }
+
+    public void setIs_active(boolean is_active) {
+        this.is_active = is_active;
+    }
+
+    public boolean isIs_superuser() {
+        return is_superuser;
+    }
+
+    public void setIs_superuser(boolean is_superuser) {
+        this.is_superuser = is_superuser;
+    }
+
+    public Date getLast_login() {
+        return last_login;
+    }
+
+    public void setLast_login(Date last_login) {
+        this.last_login = last_login;
+    }
+
+    public Date getCreated() {
+        return created;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
+    }
+
+    public Date getUpdated() {
+        return updated;
+    }
+
+    public void setUpdated(Date updated) {
+        this.updated = updated;
+    }
+}
