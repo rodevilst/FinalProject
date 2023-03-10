@@ -30,6 +30,7 @@ public class WebSecurityConfig  extends WebSecurityConfigurerAdapter implements 
     UserDetailsServiceImpl userDetailsService;
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+    AuthenticationManagerBuilder authenticationManagerBuilder;
 
 
     @Bean
@@ -75,18 +76,13 @@ protected void configure(HttpSecurity http) throws Exception {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .authorizeRequests()
             .antMatchers("/api/auth/**").permitAll()
+            .antMatchers("/api/admin/**").permitAll()
+            .antMatchers("/api/paid/**").permitAll()
             .anyRequest().authenticated();
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 }
 
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
 
 
 }
