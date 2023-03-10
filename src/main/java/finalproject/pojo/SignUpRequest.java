@@ -1,7 +1,9 @@
 package finalproject.pojo;
 
-public class SignUpRequest {
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 
+public class SignUpRequest {
     private String email;
     private String password;
 

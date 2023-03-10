@@ -1,0 +1,49 @@
+openapi: "3.0.3"
+info:
+  title: "Final API"
+  description: "Final API"
+  version: "1.0.0"
+servers:
+  - url: "https://Final"
+paths:
+  /api/auth/signin:
+    post:
+      summary: "Authenticate user"
+      operationId: "authUser"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    JwtResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        id:
+          type: integer
+        email:
+          type: string
+    BadRequest:
+      description: "Bad request"
+  responses:
+    BadRequest:

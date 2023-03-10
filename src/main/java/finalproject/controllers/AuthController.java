@@ -15,6 +15,8 @@ import finalproject.repository.RefreshTokenRepository;
 import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -133,7 +136,9 @@ public class AuthController {
     @Operation(summary = "Authenticate user",
             operationId = "authUser",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = SignUpRequest.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @PostMapping("/signin")
@@ -149,11 +154,44 @@ public class AuthController {
                         email,
                         password));
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
+
+        AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
+        if (accessToken != null) {
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            user.setLast_login(new Date());
+            userRepository.save(user);
+            return ResponseEntity.ok(new JwtResponse(
+                    accessToken.getToken(),
+                    userDetails.getId(),
+                    userDetails.getEmail()));
+        }
+
+        String accessTokenJwt = jwtUtils.generateAccessToken(user);
+        String refreshTokenJwt = jwtUtils.generateRefreshToken();
+
+        AccessToken newAccessToken = new AccessToken();
+        newAccessToken.setToken(accessTokenJwt);
+        newAccessToken.setUser(user);
+        newAccessToken.setCreatedAt(LocalDateTime.now());
+        newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+        accessTokenRepository.save(newAccessToken);
+
+        RefreshToken newRefreshToken = new RefreshToken();
+        newRefreshToken.setToken(refreshTokenJwt);
+        newRefreshToken.setUser(user);
+        newRefreshToken.setCreatedAt(LocalDateTime.now());
+        newRefreshToken.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+        refreshTokenRepository.save(newRefreshToken);
+
+        user.setLast_login(new Date());
+        userRepository.save(user);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         return ResponseEntity.ok(new JwtResponse(
-                jwt,
+                accessToken.getToken(),
                 userDetails.getId(),
                 userDetails.getEmail()));
     }
@@ -168,6 +206,7 @@ public class AuthController {
             String password = "superadmin";
             User user = new User(email, passwordEncoder.encode(password));
             user.setIs_superuser(true);
+            user.setCreated(new Date());
             userRepository.save(user);
         }
     }

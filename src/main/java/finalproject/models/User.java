@@ -7,7 +7,10 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.*;
 import javax.xml.crypto.Data;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 
 @Entity
 @Table(name = "auth_user")
@@ -28,12 +31,36 @@ public class User {
     private Date created;
     private Date updated;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    private Collection<Role> roles = new HashSet<>();
+
+    public Collection<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Collection<Role> roles) {
+        this.roles = roles;
+    }
+
     public User() {
     }
 
     public User(String email, String password) {
         this.email = email;
         this.password = password;
+    }
+
+    public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated, Collection<Role> roles) {
+        this.id = id;
+        this.email = email;
+        this.profile = profile;
+        this.password = password;
+        this.is_active = is_active;
+        this.is_superuser = is_superuser;
+        this.last_login = last_login;
+        this.created = created;
+        this.updated = updated;
+        this.roles = roles;
     }
 
     public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated) {

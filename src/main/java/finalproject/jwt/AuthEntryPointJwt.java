@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
 @Service
 public class AuthEntryPointJwt implements AuthenticationEntryPoint {
     @Override
@@ -34,3 +33,4 @@ public class AuthEntryPointJwt implements AuthenticationEntryPoint {
 
 
 }
+

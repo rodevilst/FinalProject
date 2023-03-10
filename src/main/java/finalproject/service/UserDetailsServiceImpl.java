@@ -24,21 +24,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
-//    @Override
-//    @Transactional
-//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        User user = userRepository
-//                .findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
-//
-//        return UserDetailsImpl.build(user);
-//    }
-@Override
-public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-    User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-    return UserDetailsImpl.build(user);
-}
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("user not found with username:" + email));
+        return UserDetailsImpl.build(user);
+    }
 
 
 

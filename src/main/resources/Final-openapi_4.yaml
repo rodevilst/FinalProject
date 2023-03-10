@@ -1,0 +1,22 @@
+openapi: "3.0.3"
+info:
+  title: "Final API"
+  description: "Final API"
+  version: "1.0.0"
+servers:
+  - url: "https://Final"
+paths:
+  /api/paid/{id}:
+    get:
+      summary: "GET api/paid/{id}"
+      operationId: "getPaidById"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "number"
+            format: "int64"
+      responses:
+        "200":
+          description: "OK"

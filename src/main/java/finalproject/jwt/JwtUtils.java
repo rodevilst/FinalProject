@@ -51,7 +51,7 @@ public class JwtUtils {
         return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(jwt).getBody().getSubject();
     }
     public String generateRefreshToken() {
-        Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+        Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(1200); //20min
         return Jwts.builder()
@@ -61,8 +61,9 @@ public class JwtUtils {
                 .signWith(key)
                 .compact();
     }
+
     public String generateAccessToken(User user) {
-        Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+        Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS512);
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(600); // 10min
         return Jwts.builder()
@@ -70,7 +71,7 @@ public class JwtUtils {
                 .claim("userId", user.getId())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiry))
-                .signWith(key)
+                .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 

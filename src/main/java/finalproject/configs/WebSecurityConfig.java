@@ -76,8 +76,8 @@ protected void configure(HttpSecurity http) throws Exception {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .authorizeRequests()
             .antMatchers("/api/auth/**").permitAll()
-            .antMatchers("/api/admin/**").permitAll()
             .antMatchers("/api/paid/**").permitAll()
+            .antMatchers("**").permitAll()
             .anyRequest().authenticated();
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 }
