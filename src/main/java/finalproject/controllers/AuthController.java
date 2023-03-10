@@ -127,12 +127,9 @@ public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest) 
                 .body(new MessageResponse("Error : Email is empty"));
     }
     if (signUpRequest.getPassword().isEmpty()) {
-        System.out.println("pust");
-        // обрабатываем пустой пароль
-        // возвращаем ошибку или генерируем новый пароль
+
     } else {
         String encodedPassword = new BCryptPasswordEncoder().encode(signUpRequest.getPassword());
-        // продолжаем работу с захешированным паролем
     }
 
     if (signUpRequest.getPassword().isBlank()) {
@@ -212,7 +209,6 @@ public ResponseEntity<?> registerUser(@RequestBody SignUpRequest signUpRequest) 
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-// Создаем пустой список ролей, так как у вас их нет
         List<String> roles = new ArrayList<>();
 
         return ResponseEntity.ok(new JwtResponse(
