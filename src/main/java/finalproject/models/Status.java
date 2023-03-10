@@ -1,5 +1,5 @@
 package finalproject.models;
 
 public enum Status {
-    New,Agree,Disagree,Dubbing,In_Work
+    WORKING,NEW, DISAGREE,AGREE,DOUBLE
 }

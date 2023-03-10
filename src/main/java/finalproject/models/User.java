@@ -15,7 +15,7 @@ import java.util.Date;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private long id;
     private String email;
     @JsonManagedReference
     @OneToOne(cascade = CascadeType.ALL,mappedBy = "user",fetch = FetchType.LAZY)
@@ -36,7 +36,7 @@ public class User {
         this.password = password;
     }
 
-    public User(int id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated) {
+    public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated) {
         this.id = id;
         this.email = email;
         this.profile = profile;
@@ -48,7 +48,7 @@ public class User {
         this.updated = updated;
     }
 
-    public User(int id, String email, Profile profile, String password) {
+    public User(long id, String email, Profile profile, String password) {
         this.id = id;
         this.email = email;
         this.profile = profile;
@@ -62,11 +62,12 @@ public class User {
         this.is_superuser = is_superuser;
     }
 
-    public int getId() {
+
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

@@ -1,11 +1,13 @@
 package finalproject.models;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Table(name = "groups")
 @Entity
+@Table(name = "groups")
 public class Group {
     @Id
-    private int id;
+    private long id;
     private String name;
 }

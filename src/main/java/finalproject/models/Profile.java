@@ -9,7 +9,7 @@ import javax.persistence.*;
 public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
     private String name;
     private String username;
     @JsonBackReference
@@ -17,7 +17,7 @@ public class Profile {
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
 
-    public Profile(int id, String name, String username, User user) {
+    public Profile(Long id, String name, String username, User user) {
         this.id = id;
         this.name = name;
         this.username = username;
@@ -27,11 +27,11 @@ public class Profile {
     public Profile() {
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

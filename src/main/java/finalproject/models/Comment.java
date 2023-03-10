@@ -1,15 +1,13 @@
 package finalproject.models;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.Date;
-@Table(name = "comments")
+
 @Entity
 public class Comment {
     @Id
-    @Column(name = "id")
-    private int id;
+    private long id;
     private String comment;
     private Date created_at;
-
-
 }

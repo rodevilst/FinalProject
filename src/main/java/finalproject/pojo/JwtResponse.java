@@ -1,16 +1,19 @@
 package finalproject.pojo;
 
+import java.util.List;
+
 public class JwtResponse {
     private String token;
     private String type = "Bearer";
-    private int id;
+    private long id;
     private String email;
 
-    public JwtResponse(String token, int id, String email) {
+    public JwtResponse(String token, long id, String email, List<String> roles) {
         this.token = token;
         this.id = id;
         this.email = email;
     }
+
 
     public String getToken() {
         return token;
@@ -28,11 +31,11 @@ public class JwtResponse {
         this.type = type;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
