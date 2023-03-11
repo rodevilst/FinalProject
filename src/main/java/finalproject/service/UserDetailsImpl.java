@@ -1,6 +1,7 @@
 package finalproject.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import finalproject.models.Profile;
 import finalproject.models.User;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,13 +20,15 @@ public class UserDetailsImpl implements UserDetails {
     private String email;
     @JsonIgnore
     private String password;
+    private Profile profile;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id,String email,String password,
+    public UserDetailsImpl(Long id,String email,String password,Profile profile,
                            Collection<? extends GrantedAuthority> authorities){
         this.id = id;
         this.email = email;
         this.password = password;
+        this.profile = profile;
         this.authorities = authorities;
     }
     public static UserDetailsImpl build(User user) {
@@ -37,6 +40,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
+                user.getProfile(),
                 authorities);
     }
     @Override
@@ -47,6 +51,14 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public String getPassword() {
         return password;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
     }
 
     @Override

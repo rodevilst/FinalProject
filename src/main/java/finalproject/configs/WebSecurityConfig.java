@@ -77,6 +77,8 @@ protected void configure(HttpSecurity http) throws Exception {
             .authorizeRequests()
             .antMatchers("/api/auth/**").permitAll()
             .antMatchers("/api/paid/**").permitAll()
+            .antMatchers("/swagger-ui.html").permitAll()
+            .antMatchers("/api/admin/**").authenticated()
             .antMatchers("**").permitAll()
             .anyRequest().authenticated();
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);

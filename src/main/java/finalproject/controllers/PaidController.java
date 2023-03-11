@@ -4,6 +4,8 @@ import finalproject.models.Paid;
 import finalproject.repository.PaidRepositrory;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,18 +25,23 @@ public class PaidController {
     @Operation(summary = "get all paid",
             operationId = "getAllPaid",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "200", description = "OK",
+                    content = @Content(mediaType = "application/json",
+                    schema = @Schema(implementation = Paid.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @GetMapping("")
-    public ResponseEntity<?> getAllPaid() {
+    public ResponseEntity<List<Paid>> getAllPaid() {
         List<Paid> paidList = paidRepositrory.findAll();
         return new ResponseEntity<>(paidList, HttpStatus.OK);
     }
-    @Operation(summary = "get one paid",
-            operationId = "getOnePaid",
+
+    @Operation(summary = "get all paid",
+            operationId = "getAllPaid",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "OK"),
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Paid.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @GetMapping("/{id}")

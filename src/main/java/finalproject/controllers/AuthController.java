@@ -15,9 +15,12 @@ import finalproject.repository.RefreshTokenRepository;
 import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.Example;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.apache.http.HttpStatus;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +36,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
@@ -138,9 +143,10 @@ public class AuthController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = SignUpRequest.class))),
+                                    schema = @Schema(implementation = JwtResponse.class))),
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
+
     @PostMapping("/signin")
     public ResponseEntity<?> authUser(@RequestBody LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
@@ -148,6 +154,7 @@ public class AuthController {
         if (password == null || password.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Password is empty or null");
         }
+
 
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(
@@ -157,20 +164,21 @@ public class AuthController {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
-
+        String accessTokenJwt = jwtUtils.generateAccessToken(user);
+        String refreshTokenJwt = jwtUtils.generateRefreshToken();
         AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
         if (accessToken != null) {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             user.setLast_login(new Date());
             userRepository.save(user);
-            return ResponseEntity.ok(new JwtResponse(
-                    accessToken.getToken(),
-                    userDetails.getId(),
-                    userDetails.getEmail()));
+            JwtResponse jwtResponse = new JwtResponse();
+            BeanUtils.copyProperties(user,jwtResponse);
+            jwtResponse.setAccess_token(accessTokenJwt);
+            jwtResponse.setRefresh_token(refreshTokenJwt);
+            return ResponseEntity.ok(jwtResponse);
         }
 
-        String accessTokenJwt = jwtUtils.generateAccessToken(user);
-        String refreshTokenJwt = jwtUtils.generateRefreshToken();
+
 
         AccessToken newAccessToken = new AccessToken();
         newAccessToken.setToken(accessTokenJwt);
@@ -186,14 +194,16 @@ public class AuthController {
         newRefreshToken.setExpiresAt(LocalDateTime.now().plusMinutes(20));
         refreshTokenRepository.save(newRefreshToken);
 
-        user.setLast_login(new Date());
-        userRepository.save(user);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        return ResponseEntity.ok(new JwtResponse(
-                accessToken.getToken(),
-                userDetails.getId(),
-                userDetails.getEmail()));
+        user.setLast_login(new Date());
+        userRepository.save(user);
+        JwtResponse jwtResponse = new JwtResponse();
+        BeanUtils.copyProperties(user,jwtResponse);
+        jwtResponse.setAccess_token(accessTokenJwt);
+        jwtResponse.setRefresh_token(refreshTokenJwt);
+        return ResponseEntity.ok(jwtResponse);
+
     }
 
 

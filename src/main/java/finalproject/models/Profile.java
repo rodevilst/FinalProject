@@ -1,6 +1,9 @@
 package finalproject.models;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
 
@@ -16,6 +19,7 @@ public class Profile {
     @OneToOne(fetch = FetchType.EAGER,optional = false)
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
+
 
     public Profile(Long id, String name, String username, User user) {
         this.id = id;

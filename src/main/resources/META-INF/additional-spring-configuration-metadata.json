@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "springdoc.api-docs.api4.location",
+      "type": "java.lang.String",
+      "description": "Description for springdoc.api-docs.api4.location."
+    },
+    {
+      "name": "springdoc.api-docs.api1.location",
+      "type": "java.lang.String",
+      "description": "Description for springdoc.api-docs.api1.location."
+    }
+  ] }

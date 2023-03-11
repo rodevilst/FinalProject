@@ -33,7 +33,7 @@ public class User {
 
     @ManyToMany(fetch = FetchType.EAGER)
     private Collection<Role> roles = new HashSet<>();
-
+@JsonIgnore
     public Collection<Role> getRoles() {
         return roles;
     }
