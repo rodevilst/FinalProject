@@ -12,9 +12,6 @@ public class JwtResponse {
     @Schema(description = "User ID", example = "0")
     private Long id;
 
-    @Schema(description = "User name", example = "John")
-    private String name;
-
     @Schema(description = "User email", example = "john@example.com")
     private String email;
 
@@ -42,9 +39,8 @@ public class JwtResponse {
     @Schema(description = "Refresh token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
     private String refresh_token;
 
-    public JwtResponse(Long id, String name, String email, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated, Profile profile, String access_token, String refresh_token) {
+    public JwtResponse(Long id, String email, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated, Profile profile, String access_token, String refresh_token) {
         this.id = id;
-        this.name = name;
         this.email = email;
         this.is_active = is_active;
         this.is_superuser = is_superuser;
@@ -61,14 +57,6 @@ public class JwtResponse {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public boolean isIs_active() {

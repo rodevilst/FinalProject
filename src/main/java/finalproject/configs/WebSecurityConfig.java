@@ -77,7 +77,7 @@ protected void configure(HttpSecurity http) throws Exception {
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .authorizeRequests()
             .antMatchers("/api/auth/**").permitAll()
-            .antMatchers("/api/paid/**").permitAll()
+            .antMatchers("/api/paid/**").authenticated()
             .antMatchers("/swagger-ui.html").permitAll()
             .antMatchers("/api/admin/**").authenticated()
             .antMatchers("**").permitAll()
