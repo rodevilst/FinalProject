@@ -4,3 +4,9 @@
 2. Запустите приложение с помощью команды `java -jar <имя jar-файла>`.
 
 Документация API доступна по адресу: http://localhost:6060/swagger-ui.html
+
+Коллекция Postman https://api.postman.com/collections/22098491-88b3b80f-1d05-49dc-961b-0b54425fd0d7?access_key=PMAT-01GV8Q4DDC7NGEQZVWA1GWDQNH
+
+superuser:
+email: superadmin@gmail.com
+pass:  superadmin
