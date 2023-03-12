@@ -36,22 +36,23 @@ public class Paid {
 
     @Column(name = "created_at")
     private Date createdAt;
-
+    @Column(name = "status")
+    private String status;
+    @OneToOne
+    @JoinColumn(name = "group_id")
+    private Group group;
     @Column(name = "utm")
     private String utm;
 
     @Column(name = "msg")
     private String message;
 
-    @Column(name = "status")
-    private String status;
+
 
     @Column(name = "comment")
     private String comment;
 
-    @OneToOne
-    @JoinColumn(name = "group_id")
-    private Group group;
+
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "paid_id")
