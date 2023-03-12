@@ -7,18 +7,14 @@ import finalproject.models.RefreshToken;
 import finalproject.models.User;
 import finalproject.pojo.JwtResponse;
 import finalproject.pojo.LoginRequest;
-import finalproject.pojo.MessageResponse;
-import finalproject.pojo.SignUpRequest;
 import finalproject.repository.AccessTokenRepository;
 import finalproject.repository.ProfileRepository;
 import finalproject.repository.RefreshTokenRepository;
 import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.Example;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.apache.http.HttpStatus;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +24,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +31,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -163,9 +157,9 @@ public class AuthController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
         String accessTokenJwt = jwtUtils.generateAccessToken(user);
-        String refreshTokenJwt = jwtUtils.generateRefreshToken();
+        String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
         AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
-        RefreshToken refreshToken = refreshTokenRepository.findByUserAndExpiresAtAfter(user,LocalDateTime.now());
+        RefreshToken refreshToken = refreshTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
         if (accessToken != null) {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             user.setLast_login(new Date());
@@ -177,13 +171,11 @@ public class AuthController {
             jwtResponse.setRefresh_token(refreshToken.getToken());
             return ResponseEntity.ok(jwtResponse);
         }
-
-
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         user.setLast_login(new Date());
         userRepository.save(user);
         JwtResponse jwtResponse = new JwtResponse();
-        BeanUtils.copyProperties(user,jwtResponse);
+        BeanUtils.copyProperties(user, jwtResponse);
         jwtResponse.setAccess_token(accessTokenJwt);
         jwtResponse.setRefresh_token(refreshTokenJwt);
         return ResponseEntity.ok(jwtResponse);
@@ -207,23 +199,23 @@ public class AuthController {
             profile.setName("Admin");
             profile.setUsername("Admin");
             profileRepository.save(profile);
-                    // gen access token
-        String accessToken = jwtUtils.generateAccessToken(user);
-        AccessToken accessTokenEntity = new AccessToken();
-        accessTokenEntity.setToken(accessToken);
-        accessTokenEntity.setUser(user);
-        accessTokenEntity.setCreatedAt(LocalDateTime.now());
-        accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-        accessTokenRepository.save(accessTokenEntity);
+            // gen access token
+            String accessToken = jwtUtils.generateAccessToken(user);
+            AccessToken accessTokenEntity = new AccessToken();
+            accessTokenEntity.setToken(accessToken);
+            accessTokenEntity.setUser(user);
+            accessTokenEntity.setCreatedAt(LocalDateTime.now());
+            accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+            accessTokenRepository.save(accessTokenEntity);
 
-        //gen refresh token
-        String refreshToken = jwtUtils.generateRefreshToken();
-        RefreshToken refreshTokenEntity = new RefreshToken();
-        refreshTokenEntity.setToken(refreshToken);
-        refreshTokenEntity.setUser(user);
-        refreshTokenEntity.setCreatedAt(LocalDateTime.now());
-        refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
-        refreshTokenRepository.save(refreshTokenEntity);
+            //gen refresh token
+            String refreshToken = jwtUtils.generateRefreshToken(user);
+            RefreshToken refreshTokenEntity = new RefreshToken();
+            refreshTokenEntity.setToken(refreshToken);
+            refreshTokenEntity.setUser(user);
+            refreshTokenEntity.setCreatedAt(LocalDateTime.now());
+            refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+            refreshTokenRepository.save(refreshTokenEntity);
         }
     }
 

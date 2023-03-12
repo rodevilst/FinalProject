@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +47,7 @@ public class PaidController {
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @GetMapping("")
+    @SecurityRequirement(name = "JWT")
     public ResponseEntity<List<Paid>> getAllPaid(@RequestParam(defaultValue = "0") int page,
                                                  @RequestParam(required = false) Long id,
                                                  @RequestParam(required = false) String course,
@@ -116,6 +118,8 @@ public class PaidController {
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @GetMapping("/{id}")
+    @SecurityRequirement(name = "JWT")
+
     public ResponseEntity<?> getPaidById(@PathVariable long id) {
         Optional<Paid> one = paidRepository.findById(id);
         return new ResponseEntity<>(one, HttpStatus.OK);

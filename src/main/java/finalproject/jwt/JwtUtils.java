@@ -11,9 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -50,7 +48,7 @@ public class JwtUtils {
     public String getUserNameFromJwtToken(String jwt) {
         return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(jwt).getBody().getSubject();
     }
-    public String generateRefreshToken() {
+    public String generateRefreshToken(User user) {
         Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(1200); //20min
