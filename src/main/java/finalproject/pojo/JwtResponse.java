@@ -1,9 +1,17 @@
 package finalproject.pojo;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import finalproject.models.AccessToken;
 import finalproject.models.Profile;
+import finalproject.models.RefreshToken;
+import finalproject.models.User;
+import finalproject.repository.AccessTokenRepository;
+import finalproject.repository.RefreshTokenRepository;
+import finalproject.repository.UserRepository;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.beans.BeanUtils;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 @JsonIgnoreProperties(value = {"role"}, allowGetters = true)
@@ -38,6 +46,7 @@ public class JwtResponse {
 
     @Schema(description = "Refresh token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
     private String refresh_token;
+
 
     public JwtResponse(Long id, String email, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated, Profile profile, String access_token, String refresh_token) {
         this.id = id;
@@ -138,4 +147,6 @@ public class JwtResponse {
     public void setEmail(String email) {
         this.email = email;
     }
+
+
 }

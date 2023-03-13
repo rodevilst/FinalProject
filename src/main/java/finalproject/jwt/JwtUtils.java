@@ -1,10 +1,9 @@
 package finalproject.jwt;
 
 import finalproject.models.User;
+import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 
 @Component
 public class JwtUtils {
@@ -45,6 +45,7 @@ public class JwtUtils {
         return false;
     }
 
+
     public String getUserNameFromJwtToken(String jwt) {
         return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(jwt).getBody().getSubject();
     }
@@ -56,6 +57,7 @@ public class JwtUtils {
                 .setSubject("refresh-token")
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiry))
+                .signWith(SignatureAlgorithm.HS512,jwtSecret)
                 .signWith(key)
                 .compact();
     }
