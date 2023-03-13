@@ -160,6 +160,7 @@ public class AuthController {
         String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
         AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
         RefreshToken refreshToken = refreshTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
+
         if (accessToken != null) {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             user.setLast_login(new Date());
@@ -170,7 +171,29 @@ public class AuthController {
             jwtResponse.setAccess_token(accessToken.getToken());
             jwtResponse.setRefresh_token(refreshToken.getToken());
             return ResponseEntity.ok(jwtResponse);
+        } else if (accessToken == null) {
+            user.setLast_login(new Date());
+            user.setIs_active(true);
+            userRepository.save(user);
+            JwtResponse jwtResponse = new JwtResponse();
+            BeanUtils.copyProperties(user, jwtResponse);
+            jwtResponse.setAccess_token(accessTokenJwt);
+            jwtResponse.setRefresh_token(refreshTokenJwt);
+            AccessToken accessTokenEntity = new AccessToken();
+            accessTokenEntity.setToken(accessTokenJwt);
+            accessTokenEntity.setUser(user);
+            accessTokenEntity.setCreatedAt(LocalDateTime.now());
+            accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+            accessTokenRepository.save(accessTokenEntity);
+            RefreshToken refreshTokenEntity = new RefreshToken();
+            refreshTokenEntity.setToken(refreshTokenJwt);
+            refreshTokenEntity.setUser(user);
+            refreshTokenEntity.setCreatedAt(LocalDateTime.now());
+            refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+            refreshTokenRepository.save(refreshTokenEntity);
+            return ResponseEntity.ok(jwtResponse);
         }
+
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         user.setLast_login(new Date());
         userRepository.save(user);
