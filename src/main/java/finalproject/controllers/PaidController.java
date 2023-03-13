@@ -1,5 +1,6 @@
 package finalproject.controllers;
 
+import finalproject.Filter.PaidFilter;
 import finalproject.models.Paid;
 import finalproject.repository.PaidRepository;
 import io.swagger.annotations.Api;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -48,18 +50,8 @@ public class PaidController {
             })
     @GetMapping("")
     @SecurityRequirement(name = "JWT")
-    public ResponseEntity<List<Paid>> getAllPaid(@RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam(required = false) Long id,
-                                                 @RequestParam(required = false) String course,
-                                                 @RequestParam(required = false) String name,
-                                                 @RequestParam(required = false) String surname,
-                                                 @RequestParam(required = false) String email,
-                                                 @RequestParam(required = false) String phone,
-                                                 @RequestParam(required = false) Integer age,
-                                                 @RequestParam(required = false) String courseFormat,
-                                                 @RequestParam(required = false) String courseType,
-                                                 @RequestParam(required = false) Date createdAt,
-                                                 @RequestParam(required = false) String status) {
+    public ResponseEntity<Page<Paid>> getAllPaid(@RequestParam(defaultValue = "0") int page,
+                                                 @ModelAttribute PaidFilter filter) {
         int pageSize = 50;
         Pageable pageable = PageRequest.of(page, pageSize);
 
@@ -68,43 +60,46 @@ public class PaidController {
         Root<Paid> root = cq.from(Paid.class);
         List<Predicate> predicates = new ArrayList<>();
 
-        if (id != null) {
-            predicates.add(cb.equal(root.get("id"), id));
+        if (filter.getId() != null) {
+            predicates.add(cb.equal(root.get("id"), filter.getId()));
         }
-        if (course != null) {
-            predicates.add(cb.like(root.get("course"), "%" + course + "%"));
+        if (filter.getCourse() != null) {
+            predicates.add(cb.like(root.get("course"), "%" + filter.getCourse() + "%"));
         }
-        if (name != null) {
-            predicates.add(cb.like(root.get("name"), "%" + name + "%"));
+        if (filter.getName() != null) {
+            predicates.add(cb.like(root.get("name"), "%" + filter.getName() + "%"));
         }
-        if (surname != null) {
-            predicates.add(cb.like(root.get("surname"), "%" + surname + "%"));
+        if (filter.getSurname() != null) {
+            predicates.add(cb.like(root.get("surname"), "%" + filter.getSurname() + "%"));
         }
-        if (email != null) {
-            predicates.add(cb.like(root.get("email"), "%" + email + "%"));
+        if (filter.getEmail() != null) {
+            predicates.add(cb.like(root.get("email"), "%" + filter.getEmail() + "%"));
         }
-        if (phone != null) {
-            predicates.add(cb.like(root.get("phone"), "%" + phone + "%"));
+        if (filter.getPhone() != null) {
+            predicates.add(cb.like(root.get("phone"), "%" + filter.getPhone() + "%"));
         }
-        if (age != null) {
-            predicates.add(cb.equal(root.get("age"), age));
+        if (filter.getAge() != null) {
+            predicates.add(cb.equal(root.get("age"), filter.getAge()));
         }
-        if (courseFormat != null) {
-            predicates.add(cb.equal(root.get("courseFormat"), courseFormat));
+        if (filter.getCourseFormat() != null) {
+            predicates.add(cb.equal(root.get("courseFormat"), filter.getCourseFormat()));
         }
-        if (courseType != null) {
-            predicates.add(cb.equal(root.get("courseType"), courseType));
+        if (filter.getCourseType() != null) {
+            predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
         }
-        if (createdAt != null) {
-            predicates.add(cb.equal(root.get("createdAt"), createdAt));
+        if (filter.getCreatedAt() != null) {
+            predicates.add(cb.equal(root.get("createdAt"), filter.getCreatedAt()));
         }
-        if (status != null) {
-            predicates.add(cb.equal(root.get("status"), status));
+        if (filter.getStatus() != null) {
+            predicates.add(cb.equal(root.get("status"), filter.getStatus()));
         }
 
         cq.where(predicates.toArray(new Predicate[0]));
         TypedQuery<Paid> query = em.createQuery(cq);
-        List<Paid> results = query.getResultList();
+        query.setFirstResult(page * pageSize);
+        query.setMaxResults(pageSize);
+        Page<Paid> results = new PageImpl<>(query.getResultList(), pageable, query.getResultList().size());
+
 
         return new ResponseEntity<>(results, HttpStatus.OK);
     }

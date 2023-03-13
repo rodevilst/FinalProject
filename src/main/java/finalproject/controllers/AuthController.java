@@ -19,8 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -148,63 +147,85 @@ public class AuthController {
         if (password == null || password.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Password is empty or null");
         }
-        Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(
-                        email,
-                        password));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            User user = userRepository.findByEmail(email)
+                    .orElse(null);
+            if (user == null) {
+                return ResponseEntity.badRequest().body("Authentication succeeded, but user not found");
+            }
+            String accessTokenJwt = jwtUtils.generateAccessToken(user);
+            String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
+            AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
+            RefreshToken refreshToken = refreshTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
+            if (accessToken != null) {
+                user.setLast_login(new Date());
+                user.setIs_active(true);
+                userRepository.save(user);
+                JwtResponse jwtResponse = new JwtResponse();
+                BeanUtils.copyProperties(user, jwtResponse);
+                jwtResponse.setAccess_token(accessToken.getToken());
+                jwtResponse.setRefresh_token(refreshToken.getToken());
+                return ResponseEntity.ok(jwtResponse);
+            } else if (accessToken == null && refreshToken == null){
+                user.setLast_login(new Date());
+                user.setIs_active(true);
+                userRepository.save(user);
+                JwtResponse jwtResponse = new JwtResponse();
+                BeanUtils.copyProperties(user, jwtResponse);
+                jwtResponse.setAccess_token(accessTokenJwt);
+                jwtResponse.setRefresh_token(refreshTokenJwt);
+                AccessToken accessTokenEntity = new AccessToken();
+                accessTokenEntity.setToken(accessTokenJwt);
+                accessTokenEntity.setUser(user);
+                accessTokenEntity.setCreatedAt(LocalDateTime.now());
+                accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+                accessTokenRepository.save(accessTokenEntity);
+                RefreshToken refreshTokenEntity = new RefreshToken();
+                refreshTokenEntity.setToken(refreshTokenJwt);
+                refreshTokenEntity.setUser(user);
+                refreshTokenEntity.setCreatedAt(LocalDateTime.now());
+                refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+                refreshTokenRepository.save(refreshTokenEntity);
+                return ResponseEntity.ok(jwtResponse);
+            } else if (refreshToken == null){
+                user.setLast_login(new Date());
+                user.setIs_active(true);
+                userRepository.save(user);
+                JwtResponse jwtResponse = new JwtResponse();
+                BeanUtils.copyProperties(user, jwtResponse);
+                jwtResponse.setAccess_token(accessTokenJwt);
+                jwtResponse.setRefresh_token(refreshTokenJwt);
+                RefreshToken refreshTokenEntity = new RefreshToken();
+                refreshTokenEntity.setToken(refreshTokenJwt);
+                refreshTokenEntity.setUser(user);
+                refreshTokenEntity.setCreatedAt(LocalDateTime.now());
+                refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+                refreshTokenRepository.save(refreshTokenEntity);
+                return ResponseEntity.ok(jwtResponse);
+            } else {
+                user.setLast_login(new Date());
+                user.setIs_active(true);
+                userRepository.save(user);
+                JwtResponse jwtResponse = new JwtResponse();
+                BeanUtils.copyProperties(user, jwtResponse);
+                jwtResponse.setAccess_token(accessToken.getToken());
+                jwtResponse.setRefresh_token(refreshToken.getToken());
+                return ResponseEntity.ok(jwtResponse);
+            }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
-        String accessTokenJwt = jwtUtils.generateAccessToken(user);
-        String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
-        AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
-        RefreshToken refreshToken = refreshTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
-
-        if (accessToken != null) {
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            user.setLast_login(new Date());
-            user.setIs_active(true);
-            userRepository.save(user);
-            JwtResponse jwtResponse = new JwtResponse();
-            BeanUtils.copyProperties(user, jwtResponse);
-            jwtResponse.setAccess_token(accessToken.getToken());
-            jwtResponse.setRefresh_token(refreshToken.getToken());
-            return ResponseEntity.ok(jwtResponse);
-        } else if (accessToken == null) {
-            user.setLast_login(new Date());
-            user.setIs_active(true);
-            userRepository.save(user);
-            JwtResponse jwtResponse = new JwtResponse();
-            BeanUtils.copyProperties(user, jwtResponse);
-            jwtResponse.setAccess_token(accessTokenJwt);
-            jwtResponse.setRefresh_token(refreshTokenJwt);
-            AccessToken accessTokenEntity = new AccessToken();
-            accessTokenEntity.setToken(accessTokenJwt);
-            accessTokenEntity.setUser(user);
-            accessTokenEntity.setCreatedAt(LocalDateTime.now());
-            accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-            accessTokenRepository.save(accessTokenEntity);
-            RefreshToken refreshTokenEntity = new RefreshToken();
-            refreshTokenEntity.setToken(refreshTokenJwt);
-            refreshTokenEntity.setUser(user);
-            refreshTokenEntity.setCreatedAt(LocalDateTime.now());
-            refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
-            refreshTokenRepository.save(refreshTokenEntity);
-            return ResponseEntity.ok(jwtResponse);
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.badRequest().body("User not found with email: " + email);
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.badRequest().body("Invalid email/password supplied");
+        } catch (LockedException e) {
+            return ResponseEntity.badRequest().body("Account has been locked");
+        } catch (DisabledException e) {
+            return ResponseEntity.badRequest().body("Account has been disabled");
         }
-
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        user.setLast_login(new Date());
-        userRepository.save(user);
-        JwtResponse jwtResponse = new JwtResponse();
-        BeanUtils.copyProperties(user, jwtResponse);
-        jwtResponse.setAccess_token(accessTokenJwt);
-        jwtResponse.setRefresh_token(refreshTokenJwt);
-        return ResponseEntity.ok(jwtResponse);
-
     }
-
 
     @PostConstruct
     public void adminReg() {
