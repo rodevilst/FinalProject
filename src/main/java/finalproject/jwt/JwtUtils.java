@@ -1,18 +1,15 @@
 package finalproject.jwt;
 
 import finalproject.models.User;
-import finalproject.repository.UserRepository;
-import finalproject.service.UserDetailsImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Optional;
 
 @Component
 public class JwtUtils {
@@ -23,14 +20,6 @@ public class JwtUtils {
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
-    public String generateJwtToken(Authentication authentication) {
-
-        UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
-
-        return Jwts.builder().setSubject((userPrincipal.getEmail())).setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret).compact();
-    }
 
     public boolean validateJwtToken(String jwt) {
         try {
@@ -50,20 +39,19 @@ public class JwtUtils {
         return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(jwt).getBody().getSubject();
     }
     public String generateRefreshToken(User user) {
-        Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(1200); //20min
         return Jwts.builder()
                 .setSubject("refresh-token")
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expiry))
-                .signWith(SignatureAlgorithm.HS512,jwtSecret)
-                .signWith(key)
+                .claim("userId", user.getId())
+                .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
     }
 
     public String generateAccessToken(User user) {
-        Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS512);
+        Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(600); // 10min
         return Jwts.builder()

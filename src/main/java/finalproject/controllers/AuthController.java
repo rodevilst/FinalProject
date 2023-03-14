@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -30,7 +31,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -211,10 +214,80 @@ public class AuthController {
             return ResponseEntity.badRequest().body(null);
         }
     }
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refreshTokens(@RequestBody RefreshToken refreshTokenRequest) {
-        return null;
+//    @Operation(summary = "get refresh token",
+//            operationId = "gettoken",
+//            responses = {
+//                    @ApiResponse(responseCode = "200", description = "OK"),
+//                    @ApiResponse(responseCode = "400", description = "Bad request")
+//            })
+//    @PostMapping("/refresh")
+//    public ResponseEntity<Map<String, String>> refreshToken(@RequestBody String refreshToken) {
+//        String email = jwtUtils.getUserNameFromJwtToken(refreshToken);
+//        System.out.println("Token: " + refreshToken);
+//
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+//
+//        if (!jwtUtils.validateToken(refreshToken, user)) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        }
+//
+//        Map<String, String> tokenMap = generateTokenMap(user);
+//
+//        return ResponseEntity.ok(tokenMap);
+//    }
+//
+//    private Map<String, String> generateTokenMap(User user) {
+//        String newAccessToken = jwtUtils.generateAccessToken(user);
+//        String newRefreshToken = jwtUtils.generateRefreshToken(user);
+//
+//        Map<String, String> tokenMap = new HashMap<>();
+//        tokenMap.put("accessToken", newAccessToken);
+//        tokenMap.put("refreshToken", newRefreshToken);
+//
+//        return tokenMap;
+//    }
+@Operation(summary = "give new token",
+        operationId = "newtoken",
+        responses = {
+                @ApiResponse(responseCode = "200", description = "OK",
+                        content = @Content(mediaType = "application/json",
+                                schema = @Schema(implementation = JwtResponse.class))),
+                @ApiResponse(responseCode = "400", description = "Bad request")
+        })
+@PostMapping("/refresh")
+public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String token) {
+    String refreshToken = token.substring(7);
+    RefreshToken byToken = refreshTokenRepository.findByToken(refreshToken);
+    if (byToken == null) {
+        return new ResponseEntity<>("Invalid refresh token", HttpStatus.BAD_REQUEST);
     }
+
+    User user = byToken.getUser();
+    String accessTokenJwt = jwtUtils.generateAccessToken(user);
+    String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
+
+    LocalDateTime now = LocalDateTime.now();
+    AccessToken accessTokens = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
+    if (accessTokens != null) {
+        accessTokenRepository.delete(accessTokens);
+    }
+
+    if (byToken.getExpiresAt().isBefore(now)) {
+        return new ResponseEntity<>("Refresh token has expired", HttpStatus.BAD_REQUEST);
+    } else {
+        refreshTokenRepository.delete(byToken);
+        RefreshToken refreshTokenEntity = createRefreshToken(user, refreshTokenJwt);
+        AccessToken accessToken = createAccessToken(user, accessTokenJwt);
+        JwtResponse jwtResponse = createJwtResponse(user,refreshTokenEntity.getToken(),accessToken.getToken());
+        return new ResponseEntity<>(jwtResponse,HttpStatus.OK);
+    }
+}
+
+
+
+
+
 
 
 

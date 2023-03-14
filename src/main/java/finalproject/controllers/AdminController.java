@@ -3,6 +3,7 @@ package finalproject.controllers;
 import finalproject.jwt.JwtUtils;
 import finalproject.models.AccessToken;
 import finalproject.models.User;
+import finalproject.repository.AccessTokenRepository;
 import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
@@ -35,6 +36,8 @@ import java.util.Optional;
 public class AdminController {
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    AccessTokenRepository accessTokenRepository;
 
     @Operation(summary = "get user",
             operationId = "getuser",
