@@ -66,10 +66,13 @@ public class PaidController {
             @Parameter(name = "status", in = ParameterIn.QUERY),
             @Parameter(name = "order", description = "Sort order (-name for descending)", in = ParameterIn.QUERY)
     })
-    public ResponseEntity<Page<Paid>> getAllPaid(@RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam String order,
+    public ResponseEntity<Page<Paid>> getAllPaid(@RequestParam(defaultValue = "1",required = false) int page,
+                                                 @RequestParam(required = false) String order,
                                                  @Parameter(hidden = true) @ModelAttribute PaidFilter filter) {
         int pageSize = 50;
+        if (order == null) {
+            order = "id";
+        }
         Sort sort = order.startsWith("-") ? Sort.by(order.substring(1)).descending() : Sort.by(order).ascending();
         Pageable pageable = PageRequest.of(page, pageSize, sort);
 
