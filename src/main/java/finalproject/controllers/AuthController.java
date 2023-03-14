@@ -7,6 +7,8 @@ import finalproject.models.RefreshToken;
 import finalproject.models.User;
 import finalproject.pojo.JwtResponse;
 import finalproject.pojo.LoginRequest;
+import finalproject.pojo.MessageResponse;
+import finalproject.pojo.SignUpRequest;
 import finalproject.repository.AccessTokenRepository;
 import finalproject.repository.ProfileRepository;
 import finalproject.repository.RefreshTokenRepository;
@@ -25,6 +27,7 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.springframework.web.bind.annotation.*;
@@ -124,7 +127,7 @@ public class AuthController {
 //        accessTokenRepository.save(accessTokenEntity);
 //
 //        //gen refresh token
-//        String refreshToken = jwtUtils.generateRefreshToken();
+//        String refreshToken = jwtUtils.generateRefreshToken(user);
 //        RefreshToken refreshTokenEntity = new RefreshToken();
 //        refreshTokenEntity.setToken(refreshToken);
 //        refreshTokenEntity.setUser(user);
@@ -214,39 +217,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(null);
         }
     }
-//    @Operation(summary = "get refresh token",
-//            operationId = "gettoken",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "OK"),
-//                    @ApiResponse(responseCode = "400", description = "Bad request")
-//            })
-//    @PostMapping("/refresh")
-//    public ResponseEntity<Map<String, String>> refreshToken(@RequestBody String refreshToken) {
-//        String email = jwtUtils.getUserNameFromJwtToken(refreshToken);
-//        System.out.println("Token: " + refreshToken);
-//
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-//
-//        if (!jwtUtils.validateToken(refreshToken, user)) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-//        }
-//
-//        Map<String, String> tokenMap = generateTokenMap(user);
-//
-//        return ResponseEntity.ok(tokenMap);
-//    }
-//
-//    private Map<String, String> generateTokenMap(User user) {
-//        String newAccessToken = jwtUtils.generateAccessToken(user);
-//        String newRefreshToken = jwtUtils.generateRefreshToken(user);
-//
-//        Map<String, String> tokenMap = new HashMap<>();
-//        tokenMap.put("accessToken", newAccessToken);
-//        tokenMap.put("refreshToken", newRefreshToken);
-//
-//        return tokenMap;
-//    }
+
 @Operation(summary = "give new token",
         operationId = "newtoken",
         responses = {

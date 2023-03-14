@@ -1,8 +1,15 @@
 package finalproject.controllers;
 
 import finalproject.Filter.PaidFilter;
+import finalproject.models.Comment;
+import finalproject.models.Group;
 import finalproject.models.Paid;
+import finalproject.models.User;
+import finalproject.repository.CommentRepository;
+import finalproject.repository.GroupRepository;
 import finalproject.repository.PaidRepository;
+import finalproject.repository.UserRepository;
+import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +25,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
@@ -28,6 +37,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Api(value = "Paid controller")
@@ -38,8 +48,14 @@ import java.util.*;
 public class PaidController {
     @Autowired
     PaidRepository paidRepository;
+    @Autowired
+    GroupRepository groupRepository;
+    @Autowired
+    UserRepository userRepository;
     @PersistenceContext
     private EntityManager em;
+    @Autowired
+    CommentRepository commentRepository;
 
     @Operation(summary = "get all paid",
             operationId = "getAllPaid",
@@ -66,7 +82,7 @@ public class PaidController {
             @Parameter(name = "status", in = ParameterIn.QUERY),
             @Parameter(name = "order", description = "Sort order (-name for descending)", in = ParameterIn.QUERY)
     })
-    public ResponseEntity<Page<Paid>> getAllPaid(@RequestParam(defaultValue = "1",required = false) int page,
+    public ResponseEntity<Page<Paid>> getAllPaid(@RequestParam(defaultValue = "1", required = false) int page,
                                                  @RequestParam(required = false) String order,
                                                  @Parameter(hidden = true) @ModelAttribute PaidFilter filter) {
         int pageSize = 50;
@@ -140,7 +156,8 @@ public class PaidController {
         return new ResponseEntity<>(results, HttpStatus.OK);
     }
 
-    @Operation(summary = "get all paid",
+
+    @Operation(summary = "getpaidbyid",
             operationId = "getAllPaid",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
@@ -150,9 +167,123 @@ public class PaidController {
             })
     @GetMapping("/{id}")
     @SecurityRequirement(name = "JWT")
-
     public ResponseEntity<?> getPaidById(@PathVariable long id) {
         Optional<Paid> one = paidRepository.findById(id);
         return new ResponseEntity<>(one, HttpStatus.OK);
     }
+
+    @Operation(summary = "get all paid",
+            operationId = "getAllPaid",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = Paid.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request")
+            })
+    @PatchMapping("")
+    @SecurityRequirement(name = "JWT")
+    public ResponseEntity<?> setPaidParam(
+            @RequestParam long id,
+            @RequestParam(required = false) String course,
+            @RequestParam(required = false) String group,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String surname,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) String courseFormat,
+            @RequestParam(required = false) String courseType,
+            @RequestParam(required = false) Integer sum,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String comment,
+            @RequestParam(required = false) Integer alreadyPaid,Authentication authentication) {
+
+        Paid paid = paidRepository.findById(id).orElse(null);
+        if (paid == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (course != null) {
+            paid.setCourse(course);
+        }
+        if (group != null) {
+            Group byName = groupRepository.findByName(group);
+
+            if (paid.getGroup()==null){
+                paid.setGroup(byName);
+//                paidRepository.save(paid);
+            }
+            if (paid.getGroup()!=null){
+                paid.setGroup(byName);
+//                paidRepository.save(paid);
+            }
+
+        }
+        if (name != null) {
+            paid.setName(name);
+        }
+        if (surname != null) {
+            paid.setSurname(surname);
+        }
+        if (email != null) {
+            paid.setEmail(email);
+        }
+        if (phone != null) {
+            paid.setPhone(phone);
+        }
+        if (age != null) {
+            paid.setAge(age);
+        }
+        if (courseFormat != null) {
+            paid.setCourseFormat(courseFormat);
+        }
+        if (courseType != null) {
+            paid.setCourseType(courseType);
+        }
+        if (sum != null) {
+            paid.setSum(sum);
+        }
+        if (status != null) {
+            paid.setStatus(status);
+        }
+        if (alreadyPaid != null) {
+            paid.setAlreadyPaid(alreadyPaid);
+        }
+        if (comment != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserDetails) {
+                String currentUser = ((UserDetailsImpl) principal).getEmail();
+                User byEmail = userRepository.findByEmail(currentUser).orElseThrow();
+                if (byEmail!=paid.getUser() && paid.getUser()!=null){
+                    return ResponseEntity.badRequest().body("you cant");
+                } else if (paid.getUser()==null) {
+                    paid.setUser(byEmail);
+                    paidRepository.save(paid);
+                }
+            }
+            Comment comment1 = new Comment();
+            comment1.setComment(comment);
+            comment1.setCreated_at(new Date());
+            comment1.setPaid(paid);
+            commentRepository.save(comment1);
+
+        }
+        paidRepository.save(paid);
+        return new ResponseEntity(paid, HttpStatus.OK);
+    }
+
+    @PostMapping("/group")
+    public ResponseEntity<?> createGroup(@RequestParam(required = false) String name) {
+        System.out.println(name);
+        if (name == null || name.isBlank()) {
+            return ResponseEntity.badRequest().body("Group name is required");
+        }
+        Group newGroup = new Group();
+        newGroup.setName(name);
+        newGroup.setId(groupRepository.count());
+        Group savedGroup = groupRepository.save(newGroup);
+
+        return ResponseEntity.ok(savedGroup);
+    }
+
+
 }

@@ -1,5 +1,7 @@
 package finalproject.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
@@ -38,7 +40,8 @@ public class Paid {
     private Date createdAt;
     @Column(name = "status")
     private String status;
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "group_id")
     private Group group;
     @Column(name = "utm")
@@ -46,13 +49,6 @@ public class Paid {
 
     @Column(name = "msg")
     private String message;
-
-
-
-    @Column(name = "comment")
-    private String comment;
-
-
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "paid_id")
@@ -65,8 +61,9 @@ public class Paid {
     private Integer alreadyPaid;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "manager_id")
     private User user;
+
 
     public Long getId() {
         return id;
@@ -172,13 +169,7 @@ public class Paid {
         this.status = status;
     }
 
-    public String getComment() {
-        return comment;
-    }
 
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
 
     public Integer getSum() {
         return sum;
@@ -196,7 +187,7 @@ public class Paid {
         this.alreadyPaid = alreadyPaid;
     }
 
-    public Paid(Long id, String course, String name, String surname, String email, String phone, Integer age, String courseFormat, String courseType, Date createdAt, String utm, String message, String status, String comment, Group group, List<Comment> comments, Integer sum, Integer alreadyPaid, User user) {
+    public Paid(Long id, String course, String name, String surname, String email, String phone, Integer age, String courseFormat, String courseType, Date createdAt, String utm, String message, String status, Group group, List<Comment> comments, Integer sum, Integer alreadyPaid, User user) {
         this.id = id;
         this.course = course;
         this.name = name;
@@ -210,7 +201,6 @@ public class Paid {
         this.utm = utm;
         this.message = message;
         this.status = status;
-        this.comment = comment;
         this.group = group;
         this.comments = comments;
         this.sum = sum;
