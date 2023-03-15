@@ -1,6 +1,6 @@
-Для запуска проекта необходима версия Java 17.
+Для запуска проекта необходима версия Java 1.8.
 
-1. Скачайте jar-файл проекта из .https://github.com/rodevilst/FinalProject/tree/master/out/artifacts/Final_jar
+1. Скачайте jar-файл проекта из .https://github.com/rodevilst/FinalProject/backend/app.jar
 2. Запустите приложение с помощью команды `java -jar <имя jar-файла>`.
 
 Документация API доступна по адресу: http://localhost:6060/swagger-ui.html

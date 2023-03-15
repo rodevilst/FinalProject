@@ -26,6 +26,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
@@ -252,7 +253,7 @@ public class PaidController {
             Object principal = authentication.getPrincipal();
             if (principal instanceof UserDetails) {
                 String currentUser = ((UserDetailsImpl) principal).getEmail();
-                User byEmail = userRepository.findByEmail(currentUser).orElseThrow();
+                User byEmail = userRepository.findByEmail(currentUser).orElseThrow(SecurityException::new);
                 if (byEmail!=paid.getUser() && paid.getUser()!=null){
                     return ResponseEntity.badRequest().body("you cant");
                 } else if (paid.getUser()==null) {
@@ -267,6 +268,7 @@ public class PaidController {
             commentRepository.save(comment1);
 
         }
+
         paidRepository.save(paid);
         return new ResponseEntity(paid, HttpStatus.OK);
     }
@@ -274,7 +276,7 @@ public class PaidController {
     @PostMapping("/group")
     public ResponseEntity<?> createGroup(@RequestParam(required = false) String name) {
         System.out.println(name);
-        if (name == null || name.isBlank()) {
+        if (name == null || name.isEmpty()) {
             return ResponseEntity.badRequest().body("Group name is required");
         }
         Group newGroup = new Group();
