@@ -40,6 +40,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Api(value = "Paid controller")
 
@@ -83,9 +84,10 @@ public class PaidController {
             @Parameter(name = "status", in = ParameterIn.QUERY),
             @Parameter(name = "order", description = "Sort order (-name for descending)", in = ParameterIn.QUERY)
     })
-    public ResponseEntity<Page<Paid>> getAllPaid(@RequestParam(defaultValue = "1", required = false) int page,
-                                                 @RequestParam(required = false) String order,
-                                                 @Parameter(hidden = true) @ModelAttribute PaidFilter filter) {
+    public ResponseEntity<?> getAllPaid(@RequestParam(defaultValue = "1", required = false) int page,
+                                        @RequestParam(required = false) String order,
+                                        @RequestParam(required = false) String My,
+                                        @Parameter(hidden = true) @ModelAttribute PaidFilter filter, Authentication authentication) {
         int pageSize = 50;
         if (order == null) {
             order = "id";
@@ -97,64 +99,76 @@ public class PaidController {
         CriteriaQuery<Paid> cq = cb.createQuery(Paid.class);
         Root<Paid> root = cq.from(Paid.class);
         List<Predicate> predicates = new ArrayList<>();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            String currentUser = ((UserDetailsImpl) principal).getEmail();
+            User byEmail = userRepository.findByEmail(currentUser).orElseThrow(SecurityException::new);
 
 
-        if (filter.getId() != null) {
-            predicates.add(cb.equal(root.get("id"), filter.getId()));
-        }
-        if (filter.getCourse() != null) {
-            predicates.add(cb.like(root.get("course"), "%" + filter.getCourse() + "%"));
-        }
-        if (filter.getName() != null) {
-            predicates.add(cb.like(root.get("name"), "%" + filter.getName() + "%"));
-        }
-        if (filter.getSurname() != null) {
-            predicates.add(cb.like(root.get("surname"), "%" + filter.getSurname() + "%"));
-        }
-        if (filter.getEmail() != null) {
-            predicates.add(cb.like(root.get("email"), "%" + filter.getEmail() + "%"));
-        }
-        if (filter.getPhone() != null) {
-            predicates.add(cb.like(root.get("phone"), "%" + filter.getPhone() + "%"));
-        }
-        if (filter.getAge() != null) {
-            predicates.add(cb.equal(root.get("age"), filter.getAge()));
-        }
-        if (filter.getCourseFormat() != null) {
-            predicates.add(cb.equal(root.get("courseFormat"), filter.getCourseFormat()));
-        }
-        if (filter.getCourseType() != null) {
-            predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
-        }
-        if (filter.getCreatedAt() != null) {
-            predicates.add(cb.equal(root.get("createdAt"), filter.getCreatedAt()));
-        }
-        if (filter.getStatus() != null) {
-            predicates.add(cb.equal(root.get("status"), filter.getStatus()));
-        }
-
-        cq.where(predicates.toArray(new Predicate[0]));
-
-        if (order.startsWith("-")) {
-            cq.orderBy(cb.desc(root.get(order.substring(1))));
-        } else {
-            cq.orderBy(cb.asc(root.get(order)));
-        }
-
-        TypedQuery<Paid> query = em.createQuery(cq);
-        query.setFirstResult((page - 1) * pageSize);
-        query.setMaxResults(pageSize);
-        List<Paid> resultList = query.getResultList();
-
-        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-        countQuery.select(cb.count(countQuery.from(Paid.class)));
-        countQuery.where(predicates.toArray(new Predicate[0]));
-        Long count = em.createQuery(countQuery).getSingleResult();
-
-        Page<Paid> results = new PageImpl<>(resultList, pageable, count);
+            if (My != null) {
+                predicates.add(cb.equal(root.get("user").get("email"), currentUser));
+            }
 
 
-        return new ResponseEntity<>(results, HttpStatus.OK);
+            if (filter.getId() != null) {
+                predicates.add(cb.equal(root.get("id"), filter.getId()));
+            }
+            if (filter.getCourse() != null) {
+                predicates.add(cb.like(root.get("course"), "%" + filter.getCourse() + "%"));
+            }
+            if (filter.getName() != null) {
+                predicates.add(cb.like(root.get("name"), "%" + filter.getName() + "%"));
+            }
+            if (filter.getSurname() != null) {
+                predicates.add(cb.like(root.get("surname"), "%" + filter.getSurname() + "%"));
+            }
+            if (filter.getEmail() != null) {
+                predicates.add(cb.like(root.get("email"), "%" + filter.getEmail() + "%"));
+            }
+            if (filter.getPhone() != null) {
+                predicates.add(cb.like(root.get("phone"), "%" + filter.getPhone() + "%"));
+            }
+            if (filter.getAge() != null) {
+                predicates.add(cb.equal(root.get("age"), filter.getAge()));
+            }
+            if (filter.getCourseFormat() != null) {
+                predicates.add(cb.equal(root.get("courseFormat"), filter.getCourseFormat()));
+            }
+            if (filter.getCourseType() != null) {
+                predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
+            }
+            if (filter.getCreatedAt() != null) {
+                predicates.add(cb.equal(root.get("createdAt"), filter.getCreatedAt()));
+            }
+            if (filter.getStatus() != null) {
+                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+            }
+
+            cq.where(predicates.toArray(new Predicate[0]));
+
+            if (order.startsWith("-")) {
+                cq.orderBy(cb.desc(root.get(order.substring(1))));
+            } else {
+                cq.orderBy(cb.asc(root.get(order)));
+            }
+
+            TypedQuery<Paid> query = em.createQuery(cq);
+            query.setFirstResult((page - 1) * pageSize);
+            query.setMaxResults(pageSize);
+            List<Paid> resultList = query.getResultList();
+
+            CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+            countQuery.select(cb.count(countQuery.from(Paid.class)));
+            countQuery.where(predicates.toArray(new Predicate[0]));
+            Long count = em.createQuery(countQuery).getSingleResult();
+
+            Page<Paid> results = new PageImpl<>(resultList, pageable, count);
+
+
+            return new ResponseEntity<>(results, HttpStatus.OK);
+        }
+        return null;
+
     }
 
 
@@ -197,81 +211,93 @@ public class PaidController {
             @RequestParam(required = false) Integer sum,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String comment,
-            @RequestParam(required = false) Integer alreadyPaid,Authentication authentication) {
+            @RequestParam(required = false) Integer alreadyPaid, Authentication authentication) {
 
-        Paid paid = paidRepository.findById(id).orElse(null);
-        if (paid == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (course != null) {
-            paid.setCourse(course);
-        }
-        if (group != null) {
-            Group byName = groupRepository.findByName(group);
+        Paid paid = paidRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("paid not found"));
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            String currentUser = ((UserDetailsImpl) principal).getEmail();
+            User byEmail = userRepository.findByEmail(currentUser).orElseThrow(SecurityException::new);
 
-            if (paid.getGroup()==null){
-                paid.setGroup(byName);
-//                paidRepository.save(paid);
+            if (paid == null) {
+                return ResponseEntity.badRequest().build();
             }
-            if (paid.getGroup()!=null){
-                paid.setGroup(byName);
-//                paidRepository.save(paid);
+            if (course != null) {
+                paid.setCourse(course);
+                checkUserAndSave(paid, byEmail);
             }
+            if (group != null) {
+                Group byName = groupRepository.findByName(group);
 
-        }
-        if (name != null) {
-            paid.setName(name);
-        }
-        if (surname != null) {
-            paid.setSurname(surname);
-        }
-        if (email != null) {
-            paid.setEmail(email);
-        }
-        if (phone != null) {
-            paid.setPhone(phone);
-        }
-        if (age != null) {
-            paid.setAge(age);
-        }
-        if (courseFormat != null) {
-            paid.setCourseFormat(courseFormat);
-        }
-        if (courseType != null) {
-            paid.setCourseType(courseType);
-        }
-        if (sum != null) {
-            paid.setSum(sum);
-        }
-        if (status != null) {
-            paid.setStatus(status);
-        }
-        if (alreadyPaid != null) {
-            paid.setAlreadyPaid(alreadyPaid);
-        }
-        if (comment != null) {
-            Object principal = authentication.getPrincipal();
-            if (principal instanceof UserDetails) {
-                String currentUser = ((UserDetailsImpl) principal).getEmail();
-                User byEmail = userRepository.findByEmail(currentUser).orElseThrow(SecurityException::new);
-                if (byEmail!=paid.getUser() && paid.getUser()!=null){
-                    return ResponseEntity.badRequest().body("you cant");
-                } else if (paid.getUser()==null) {
-                    paid.setUser(byEmail);
-                    paidRepository.save(paid);
+                if (paid.getGroup() == null) {
+                    paid.setGroup(byName);
+                }
+                if (paid.getGroup() != null) {
+                    paid.setGroup(byName);
+                }
+                checkUserAndSave(paid, byEmail);
+            }
+            if (name != null) {
+                paid.setName(name);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (surname != null) {
+                paid.setSurname(surname);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (email != null) {
+                paid.setEmail(email);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (phone != null) {
+                paid.setPhone(phone);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (age != null) {
+                paid.setAge(age);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (courseFormat != null) {
+                paid.setCourseFormat(courseFormat);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (courseType != null) {
+                paid.setCourseType(courseType);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (sum != null) {
+                paid.setSum(sum);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (status != null) {
+                paid.setStatus(status);
+                checkUserAndSave(paid, byEmail);
+                if (status.equals("New")) {
+                    paid.setUser(null);
                 }
             }
-            Comment comment1 = new Comment();
-            comment1.setComment(comment);
-            comment1.setCreated_at(new Date());
-            comment1.setPaid(paid);
-            commentRepository.save(comment1);
+            if (alreadyPaid != null) {
+                paid.setAlreadyPaid(alreadyPaid);
+                checkUserAndSave(paid, byEmail);
+            }
+            if (comment != null) {
+                Comment comment1 = new Comment();
+                comment1.setComment(comment);
+                comment1.setCreated_at(new Date());
+                comment1.setPaid(paid);
+                commentRepository.save(comment1);
+                checkUserAndSave(paid, byEmail);
 
+            }
+
+
+            paidRepository.save(paid);
+            return new ResponseEntity(paid, HttpStatus.OK);
         }
-
-        paidRepository.save(paid);
-        return new ResponseEntity(paid, HttpStatus.OK);
+        return null;
     }
+
 
     @PostMapping("/group")
     public ResponseEntity<?> createGroup(@RequestParam(required = false) String name) {
@@ -286,6 +312,23 @@ public class PaidController {
 
         return ResponseEntity.ok(savedGroup);
     }
+
+    @GetMapping("/group")
+    public ResponseEntity<?> getAllGroup() {
+        List<Group> all = groupRepository.findAll();
+        return new ResponseEntity<>(all, HttpStatus.OK);
+    }
+
+
+    private void checkUserAndSave(Paid paid, User byEmail) {
+        if (byEmail != paid.getUser() && paid.getUser() != null) {
+            throw new IllegalArgumentException("you can't do that");
+        } else if (paid.getUser() == null) {
+            paid.setUser(byEmail);
+            paidRepository.save(paid);
+        }
+    }
+
 
 
 }

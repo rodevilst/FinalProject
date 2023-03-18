@@ -40,4 +40,7 @@ public interface PaidRepository extends JpaRepository<Paid,Long> {
             @Param("status") String status);
 
     Page<Paid> findAll(Specification<Paid> spec, Pageable pageable);
+   List<Paid> findByUserEmail(String email);
+
+
 }

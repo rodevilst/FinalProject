@@ -4,8 +4,11 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 public class SignUpRequest {
+    @Email
     private String email;
-    private String password;
+    private String name;
+    private String username;
+
 
 
     public String getEmail() {
@@ -16,11 +19,27 @@ public class SignUpRequest {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
+    public String getName() {
+        return name;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+
+
+    public SignUpRequest() {
+    }
+
+
+    public SignUpRequest(String email, String name, String username) {
+        this.email = email;
+        this.name = name;
+        this.username = username;
     }
 }

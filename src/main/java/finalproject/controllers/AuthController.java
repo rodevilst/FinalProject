@@ -1,10 +1,7 @@
 package finalproject.controllers;
 
 import finalproject.jwt.JwtUtils;
-import finalproject.models.AccessToken;
-import finalproject.models.Profile;
-import finalproject.models.RefreshToken;
-import finalproject.models.User;
+import finalproject.models.*;
 import finalproject.pojo.JwtResponse;
 import finalproject.pojo.LoginRequest;
 import finalproject.pojo.MessageResponse;
@@ -227,8 +224,8 @@ public class AuthController {
                 @ApiResponse(responseCode = "400", description = "Bad request")
         })
 @PostMapping("/refresh")
-public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String token) {
-    String refreshToken = token.substring(7);
+public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
+    String refreshToken = tokenWrapper.getToken();
     RefreshToken byToken = refreshTokenRepository.findByToken(refreshToken);
     if (byToken == null) {
         return new ResponseEntity<>("Invalid refresh token", HttpStatus.BAD_REQUEST);
@@ -250,7 +247,7 @@ public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String tok
         refreshTokenRepository.delete(byToken);
         RefreshToken refreshTokenEntity = createRefreshToken(user, refreshTokenJwt);
         AccessToken accessToken = createAccessToken(user, accessTokenJwt);
-        JwtResponse jwtResponse = createJwtResponse(user,refreshTokenEntity.getToken(),accessToken.getToken());
+        JwtResponse jwtResponse = createJwtResponse(user,accessToken.getToken(),refreshTokenEntity.getToken());
         return new ResponseEntity<>(jwtResponse,HttpStatus.OK);
     }
 }

@@ -68,6 +68,7 @@ protected void configure(HttpSecurity http) throws Exception {
             .authorizeRequests()
             .antMatchers("/api/auth/**").permitAll()
             .antMatchers("/api/paid/**").authenticated()
+            .antMatchers("/api/admin/user/reg").access("hasAuthority('ADMIN') or (hasAuthority('USER') and #user.isSuperuser())")
             .antMatchers("/swagger-ui.html").permitAll()
             .antMatchers("/api/admin/**").authenticated()
             .antMatchers("**").permitAll()

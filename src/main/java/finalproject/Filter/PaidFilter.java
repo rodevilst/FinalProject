@@ -1,5 +1,7 @@
 package finalproject.Filter;
 
+import finalproject.models.User;
+
 import java.util.Date;
 
 public class PaidFilter {
@@ -14,6 +16,7 @@ public class PaidFilter {
     private String courseType;
     private Date createdAt;
     private String status;
+
 
     public Long getId() {
         return id;

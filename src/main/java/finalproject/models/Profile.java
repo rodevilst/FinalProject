@@ -28,6 +28,11 @@ public class Profile {
         this.user = user;
     }
 
+    public Profile(String name, String username) {
+        this.name = name;
+        this.username = username;
+    }
+
     public Profile() {
     }
 
