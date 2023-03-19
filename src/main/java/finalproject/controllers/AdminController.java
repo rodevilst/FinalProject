@@ -21,8 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -89,10 +92,9 @@ public class AdminController {
         }
         return new ResponseEntity<>("User details not found", HttpStatus.NOT_FOUND);
     }
-    @PreAuthorize("hasAuthority('ADMIN') or (hasAuthority('USER') and #currentuser.isIs_superuser())")
-    @PostMapping("/users/reg")
-    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest, @AuthenticationPrincipal User currentuser) {
 
+    @PostMapping("/users/reg")
+    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest) {
         String randomPassword = generateRandomPassword(20);
         if (StringUtils.isBlank(signUpRequest.getEmail())
                 || StringUtils.isBlank(signUpRequest.getName())
@@ -164,8 +166,6 @@ public class AdminController {
         }
         return sb.toString();
     }
-
-
 
 
 }
