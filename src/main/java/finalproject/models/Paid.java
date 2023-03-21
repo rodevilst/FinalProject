@@ -39,7 +39,7 @@ public class Paid {
     @Column(name = "created_at")
     private Date createdAt;
     @Column(name = "status")
-    private String status;
+    private Status status;
     @OneToOne(fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @JoinColumn(name = "group_id")
@@ -161,11 +161,11 @@ public class Paid {
         this.message = message;
     }
 
-    public String getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
@@ -187,7 +187,7 @@ public class Paid {
         this.alreadyPaid = alreadyPaid;
     }
 
-    public Paid(Long id, String course, String name, String surname, String email, String phone, Integer age, String courseFormat, String courseType, Date createdAt, String utm, String message, String status, Group group, List<Comment> comments, Integer sum, Integer alreadyPaid, User user) {
+    public Paid(Long id, String course, String name, String surname, String email, String phone, Integer age, String courseFormat, String courseType, Date createdAt, String utm, String message, Status status, Group group, List<Comment> comments, Integer sum, Integer alreadyPaid, User user) {
         this.id = id;
         this.course = course;
         this.name = name;

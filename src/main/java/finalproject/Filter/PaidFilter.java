@@ -22,6 +22,15 @@ public class PaidFilter {
     private Integer alreadyPaid;
     private User user;
     private Date createdAt;
+    private String comment;
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
 
     public String getGroup() {
         return group;

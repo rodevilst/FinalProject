@@ -4,7 +4,7 @@ import finalproject.models.Group;
 
 public class PaidDto {
     private String course;
-    private Group group;
+    private String group;
     private String name;
     private String surname;
     private String email;
@@ -25,11 +25,11 @@ public class PaidDto {
         this.course = course;
     }
 
-    public Group getGroup() {
+    public String getGroup() {
         return group;
     }
 
-    public void setGroup(Group group) {
+    public void setGroup(String group) {
         this.group = group;
     }
 

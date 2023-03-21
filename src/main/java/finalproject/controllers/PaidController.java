@@ -2,10 +2,7 @@ package finalproject.controllers;
 
 import finalproject.Filter.PaidFilter;
 import finalproject.dto.PaidDto;
-import finalproject.models.Comment;
-import finalproject.models.Group;
-import finalproject.models.Paid;
-import finalproject.models.User;
+import finalproject.models.*;
 import finalproject.pojo.JwtResponse;
 import finalproject.repository.CommentRepository;
 import finalproject.repository.GroupRepository;
@@ -378,7 +375,7 @@ public class PaidController {
                     row.createCell(8).setCellValue(" ");
                 }
                 if (paid.getStatus() != null) {
-                    row.createCell(9).setCellValue(paid.getStatus());
+                    row.createCell(9).setCellValue(paid.getStatus().toString());
                 } else {
                     row.createCell(9).setCellValue(" ");
                 }
@@ -457,9 +454,7 @@ public class PaidController {
     @PreAuthorize("#user.is_active")
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<?> setPaidParam(
-            @PathVariable long id,
-            @RequestBody(required = false) PaidDto paidDto, Authentication
-                    authentication, @AuthenticationPrincipal UserDetailsImpl user) {
+            @PathVariable long id, Authentication authentication, @AuthenticationPrincipal UserDetailsImpl user, @RequestBody(required = false) PaidFilter filter) {
 
         Paid paid = paidRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("paid not found"));
@@ -468,31 +463,19 @@ public class PaidController {
         if (principal instanceof UserDetails) {
             String currentUser = ((UserDetailsImpl) principal).getEmail();
             User byEmail = userRepository.findByEmail(currentUser).orElseThrow(SecurityException::new);
-            String course = paidDto.getCourse();
-            String group = paidDto.getGroup().getName();
-            String name = paidDto.getName();
-            String surname = paidDto.getSurname();
-            String email = paidDto.getEmail();
-            String phone = paidDto.getPhone();
-            Integer age = paidDto.getAge();
-            String courseFormat = paidDto.getCourseFormat();
-            String courseType = paidDto.getCourseType();
-            Integer sum = paidDto.getSum();
-            String status = paidDto.getStatus();
-            Integer alreadyPaid = paidDto.getAlreadyPaid();
-            String comment = paidDto.getComment();
-            paid.setStatus("In work");
+
+
+            paid.setStatus(Status.WORKING);
             paid.setUser(byEmail);
             if (paid == null) {
                 return ResponseEntity.badRequest().build();
             }
-            if (course != null) {
-                paid.setCourse(course);
+            if (filter != null && filter.getCourse() != null) {
+                paid.setCourse(filter.getCourse());
                 checkUserAndSave(paid, byEmail);
             }
-            if (group != null) {
-                Group byName = groupRepository.findByName(group);
-
+            if (filter != null &&filter.getGroup() != null) {
+                Group byName = groupRepository.findByName(filter.getName());
                 if (paid.getGroup() == null) {
                     paid.setGroup(byName);
                 }
@@ -501,57 +484,69 @@ public class PaidController {
                 }
                 checkUserAndSave(paid, byEmail);
             }
-            if (name != null) {
-                paid.setName(name);
+            if (filter != null &&filter.getName() != null) {
+                paid.setName(filter.getName());
                 checkUserAndSave(paid, byEmail);
             }
-            if (surname != null) {
-                paid.setSurname(surname);
+            if (filter != null &&filter.getSurname() != null) {
+                paid.setSurname(filter.getSurname());
                 checkUserAndSave(paid, byEmail);
             }
-            if (email != null) {
-                paid.setEmail(email);
+            if (filter != null &&filter.getEmail() != null) {
+                paid.setEmail(filter.getEmail());
                 checkUserAndSave(paid, byEmail);
             }
-            if (phone != null) {
-                paid.setPhone(phone);
+            if (filter != null &&filter.getPhone() != null) {
+                paid.setPhone(filter.getPhone());
                 checkUserAndSave(paid, byEmail);
             }
-            if (age != null) {
-                paid.setAge(age);
+            if (filter != null &&filter.getAge() != null) {
+                paid.setAge(filter.getAge());
                 checkUserAndSave(paid, byEmail);
             }
-            if (courseFormat != null) {
-                paid.setCourseFormat(courseFormat);
+            if (filter != null &&filter.getCourseFormat() != null) {
+                paid.setCourseFormat(filter.getCourseFormat());
                 checkUserAndSave(paid, byEmail);
             }
-            if (courseType != null) {
-                paid.setCourseType(courseType);
+            if (filter != null &&filter.getCourseType() != null) {
+                paid.setCourseType(filter.getCourseType());
                 checkUserAndSave(paid, byEmail);
             }
-            if (sum != null) {
-                paid.setSum(sum);
+            if (filter != null &&filter.getSum() != null) {
+                paid.setSum(filter.getSum());
                 checkUserAndSave(paid, byEmail);
             }
-            if (status != null) {
-                paid.setStatus(status);
-                checkUserAndSave(paid, byEmail);
-                if (status.equals("New")) {
+            if (filter != null &&filter.getStatus() != null) {
+                if (filter.getStatus().equals(Status.AGREE.toString())) {
+                    paid.setStatus(Status.AGREE);
+                } else if (filter.getStatus().equals(Status.WORKING.toString())) {
+                    paid.setStatus(Status.WORKING);
+                } else if (filter.getStatus().equals(Status.DISAGREE.toString())) {
+                    paid.setStatus(Status.DISAGREE);
+                } else if (filter.getStatus().equals(Status.DOUBLE.toString())) {
+                    paid.setStatus(Status.DOUBLE);
+                } else if (filter.getStatus().equals(Status.NEW.toString())) {
+                    paid.setStatus(Status.NEW);
                     paid.setUser(null);
+                    checkUserAndSave(paid, byEmail);
                 }
-            }
-            if (alreadyPaid != null) {
-                paid.setAlreadyPaid(alreadyPaid);
                 checkUserAndSave(paid, byEmail);
             }
-            if (comment != null) {
+            if (filter != null &&filter.getAlreadyPaid() != null) {
+                paid.setAlreadyPaid(filter.getAlreadyPaid());
+                checkUserAndSave(paid, byEmail);
+            }
+            if (filter != null &&filter.getComment() != null) {
                 Comment comment1 = new Comment();
-                comment1.setComment(comment);
+                comment1.setComment(filter.getComment());
                 comment1.setCreated_at(new Date());
                 comment1.setPaid(paid);
                 commentRepository.save(comment1);
                 checkUserAndSave(paid, byEmail);
 
+            }
+            if (paid.getStatus() == Status.NEW) {
+                paid.setUser(null);
             }
             paidRepository.save(paid);
             return new ResponseEntity(paid, HttpStatus.OK);
