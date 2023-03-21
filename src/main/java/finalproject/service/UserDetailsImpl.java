@@ -3,9 +3,7 @@ package finalproject.service;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import finalproject.models.Profile;
 import finalproject.models.User;
-import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -20,17 +18,23 @@ public class UserDetailsImpl implements UserDetails {
     private String email;
     @JsonIgnore
     private String password;
+
     private Profile profile;
+    private boolean is_active;
+    private boolean is_superuser;
+
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id,String email,String password,Profile profile,
-                           Collection<? extends GrantedAuthority> authorities){
+    public UserDetailsImpl(Long id, String email, String password, Profile profile, boolean is_active, boolean is_superuser, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.profile = profile;
+        this.is_active = is_active;
+        this.is_superuser = is_superuser;
         this.authorities = authorities;
     }
+
     public static UserDetailsImpl build(User user) {
         List<GrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName().name()))
@@ -41,8 +45,27 @@ public class UserDetailsImpl implements UserDetails {
                 user.getEmail(),
                 user.getPassword(),
                 user.getProfile(),
+                user.isIs_active(),
+                user.isIs_superuser(),
                 authorities);
     }
+
+    public boolean isIs_active() {
+        return is_active;
+    }
+
+    public void setIs_active(boolean is_active) {
+        this.is_active = is_active;
+    }
+
+    public boolean isIs_superuser() {
+        return is_superuser;
+    }
+
+    public void setIs_superuser(boolean is_superuser) {
+        this.is_superuser = is_superuser;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;

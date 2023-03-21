@@ -33,7 +33,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -80,6 +82,7 @@ public class PaidController {
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @GetMapping("")
+    @PreAuthorize("#user.is_active")
     @SecurityRequirement(name = "JWT")
     @Parameters({
             @Parameter(name = "page", description = "A page number within the paginated result set.", in = ParameterIn.QUERY),
@@ -99,7 +102,7 @@ public class PaidController {
     public ResponseEntity<?> getAllPaid(@RequestParam(defaultValue = "1", required = false) int page,
                                         @RequestParam(required = false) String order,
                                         @RequestParam(required = false) String My,
-                                        @Parameter(hidden = true) @ModelAttribute PaidFilter filter, Authentication authentication) throws IOException {
+                                        @Parameter(hidden = true) @ModelAttribute PaidFilter filter, Authentication authentication,@AuthenticationPrincipal UserDetailsImpl user) throws IOException {
         int pageSize = 50;
         if (order == null) {
             order = "id";
@@ -207,6 +210,7 @@ public class PaidController {
                     @ApiResponse(responseCode = "400", description = "Bad request")
             })
     @PatchMapping("")
+    @PreAuthorize("#user.is_active")
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<?> setPaidParam(
             @RequestParam long id,
@@ -222,7 +226,7 @@ public class PaidController {
             @RequestParam(required = false) Integer sum,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String comment,
-            @RequestParam(required = false) Integer alreadyPaid, Authentication authentication) {
+            @RequestParam(required = false) Integer alreadyPaid, Authentication authentication,@AuthenticationPrincipal UserDetailsImpl user) {
 
         Paid paid = paidRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("paid not found"));
@@ -307,7 +311,7 @@ public class PaidController {
         }
         return null;
     }
-
+UserDetailsImpl userDetails;
     @Operation(summary = "Create a new group",
             operationId = "CreateGroup",
             parameters = {
@@ -318,9 +322,10 @@ public class PaidController {
                     @ApiResponse(responseCode = "400", description = "Bad request - group name is missing or empty"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
+    @PreAuthorize("#user.is_active")
     @PostMapping("/group")
-    public ResponseEntity<?> createGroup(@RequestParam(required = false) String name) {
-        System.out.println(name);
+    public ResponseEntity<?> createGroup(@RequestParam(required = false) String name, @AuthenticationPrincipal UserDetailsImpl user) {
+
         if (name == null || name.isEmpty()) {
             return ResponseEntity.badRequest().body("Group name is required");
         }
@@ -338,9 +343,9 @@ public class PaidController {
                             schema = @Schema(implementation = Group.class))),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-
+    @PreAuthorize("#user.is_active")
     @GetMapping("/group")
-    public ResponseEntity<?> getAllGroup() {
+    public ResponseEntity<?> getAllGroup(@AuthenticationPrincipal UserDetailsImpl user) {
         List<Group> all = groupRepository.findAll();
         return new ResponseEntity<>(all, HttpStatus.OK);
     }

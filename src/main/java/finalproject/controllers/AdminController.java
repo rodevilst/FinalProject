@@ -95,7 +95,7 @@ public class AdminController {
         }
         return new ResponseEntity<>("User details not found", HttpStatus.NOT_FOUND);
     }
-
+    @PreAuthorize("#user.isIs_superuser()")
     @PostMapping("/users/reg")
     @Operation(summary = "Create a new user",
             operationId = "CreateUser",
@@ -106,7 +106,7 @@ public class AdminController {
                     @ApiResponse(responseCode = "400", description = "Bad request - missing required fields or invalid email format"),
                     @ApiResponse(responseCode = "409", description = "Email already exists")
             })
-    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest) {
+    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest,@AuthenticationPrincipal UserDetailsImpl user) {
         String randomPassword = generateRandomPassword(20);
         if (StringUtils.isBlank(signUpRequest.getEmail())
                 || StringUtils.isBlank(signUpRequest.getName())
@@ -158,7 +158,9 @@ public class AdminController {
                     @ApiResponse(responseCode = "400", description = "Bad request - invalid access token")
             })
     @PostMapping("/users/recreate")
-    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper) {
+    @PreAuthorize("#userDetails.isIs_superuser()")
+
+    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper,@AuthenticationPrincipal UserDetailsImpl userDetails) {
         String accessToken = tokenWrapper.getToken();
         AccessToken byToken = accessTokenRepository.findByToken(accessToken);
         if (byToken == null) {
