@@ -142,16 +142,18 @@ public class AuthController {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(mediaType = "application/json",
                                     schema = @Schema(implementation = JwtResponse.class))),
-                    @ApiResponse(responseCode = "400", description = "Bad request")
+                    @ApiResponse(responseCode = "400", description = "Bad request"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized - user not found or blocked"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
             })
 
     @PostMapping("/signin")
-    public ResponseEntity<JwtResponse> authUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authUser(@RequestBody LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
 
         if (StringUtils.isBlank(password)) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body("password can`t be null");
         }
 
         try {
@@ -203,15 +205,16 @@ public class AuthController {
                 return ResponseEntity.ok(jwtResponse);
             }
 
+
             throw new RuntimeException("Something went wrong");
         } catch (UsernameNotFoundException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body("user not found");
         } catch (BadCredentialsException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body("email or password incorrect");
         } catch (LockedException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body("user blocked");
         } catch (DisabledException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(null); // Ошибка: пользователь отключен
         }
     }
 
@@ -251,15 +254,6 @@ public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
         return new ResponseEntity<>(jwtResponse,HttpStatus.OK);
     }
 }
-
-
-
-
-
-
-
-
-
     private AccessToken createAccessToken(User user, String accessTokenJwt) {
         AccessToken accessTokenEntity = new AccessToken();
         accessTokenEntity.setToken(accessTokenJwt);

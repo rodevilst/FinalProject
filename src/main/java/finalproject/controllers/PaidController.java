@@ -5,12 +5,14 @@ import finalproject.models.Comment;
 import finalproject.models.Group;
 import finalproject.models.Paid;
 import finalproject.models.User;
+import finalproject.pojo.JwtResponse;
 import finalproject.repository.CommentRepository;
 import finalproject.repository.GroupRepository;
 import finalproject.repository.PaidRepository;
 import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -19,6 +21,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,6 +37,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.persistence.EntityManager;
@@ -38,6 +48,8 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -87,7 +99,7 @@ public class PaidController {
     public ResponseEntity<?> getAllPaid(@RequestParam(defaultValue = "1", required = false) int page,
                                         @RequestParam(required = false) String order,
                                         @RequestParam(required = false) String My,
-                                        @Parameter(hidden = true) @ModelAttribute PaidFilter filter, Authentication authentication) {
+                                        @Parameter(hidden = true) @ModelAttribute PaidFilter filter, Authentication authentication) throws IOException {
         int pageSize = 50;
         if (order == null) {
             order = "id";
@@ -164,7 +176,6 @@ public class PaidController {
 
             Page<Paid> results = new PageImpl<>(resultList, pageable, count);
 
-
             return new ResponseEntity<>(results, HttpStatus.OK);
         }
         return null;
@@ -216,6 +227,7 @@ public class PaidController {
         Paid paid = paidRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("paid not found"));
         Object principal = authentication.getPrincipal();
+
         if (principal instanceof UserDetails) {
             String currentUser = ((UserDetailsImpl) principal).getEmail();
             User byEmail = userRepository.findByEmail(currentUser).orElseThrow(SecurityException::new);
@@ -290,15 +302,22 @@ public class PaidController {
                 checkUserAndSave(paid, byEmail);
 
             }
-
-
             paidRepository.save(paid);
             return new ResponseEntity(paid, HttpStatus.OK);
         }
         return null;
     }
 
-
+    @Operation(summary = "Create a new group",
+            operationId = "CreateGroup",
+            parameters = {
+                    @Parameter(name = "name", description = "The name of the group", required = true, example = "My Group")
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Group created successfully"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - group name is missing or empty"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PostMapping("/group")
     public ResponseEntity<?> createGroup(@RequestParam(required = false) String name) {
         System.out.println(name);
@@ -312,6 +331,13 @@ public class PaidController {
 
         return ResponseEntity.ok(savedGroup);
     }
+    @Operation(summary = "Get all groups",
+            operationId = "GetAllGroups",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of all groups returned successfully", content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Group.class))),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
 
     @GetMapping("/group")
     public ResponseEntity<?> getAllGroup() {
@@ -328,7 +354,6 @@ public class PaidController {
             paidRepository.save(paid);
         }
     }
-
 
 
 }

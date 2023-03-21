@@ -3,6 +3,7 @@ package finalproject.controllers;
 import finalproject.jwt.JwtUtils;
 import finalproject.models.*;
 import finalproject.pojo.ActivateUser;
+import finalproject.pojo.JwtResponse;
 import finalproject.pojo.MessageResponse;
 import finalproject.pojo.SignUpRequest;
 import finalproject.repository.AccessTokenRepository;
@@ -11,6 +12,8 @@ import finalproject.repository.RefreshTokenRepository;
 import finalproject.repository.UserRepository;
 import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -94,6 +97,15 @@ public class AdminController {
     }
 
     @PostMapping("/users/reg")
+    @Operation(summary = "Create a new user",
+            operationId = "CreateUser",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "User created successfully",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = AccessToken.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - missing required fields or invalid email format"),
+                    @ApiResponse(responseCode = "409", description = "Email already exists")
+            })
     public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest) {
         String randomPassword = generateRandomPassword(20);
         if (StringUtils.isBlank(signUpRequest.getEmail())
@@ -110,8 +122,6 @@ public class AdminController {
                     .badRequest()
                     .body(new MessageResponse("Error : Email is exist"));
         }
-
-
         User newuser = new User(signUpRequest.getEmail());
         newuser.setPassword(passwordEncoder.encode(randomPassword));
 
@@ -138,12 +148,53 @@ public class AdminController {
         userRepository.save(newuser);
         return new ResponseEntity<>(accessTokenEntity, HttpStatus.CREATED);
     }
+    @Operation(summary = "Access token",
+            description = "Refreshes an existing access token by generating a new one and deleting the old one.",
+            operationId = "accessToken",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = TokenWrapper.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid access token")
+            })
+    @PostMapping("/users/recreate")
+    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper) {
+        String accessToken = tokenWrapper.getToken();
+        AccessToken byToken = accessTokenRepository.findByToken(accessToken);
+        if (byToken == null) {
+            return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
+        }
 
+        User user = byToken.getUser();
+        String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
+
+        LocalDateTime now = LocalDateTime.now();
+        AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
+        if (oldAccessToken != null) {
+            accessTokenRepository.delete(oldAccessToken);
+        }
+
+        AccessToken newAccessToken = new AccessToken();
+        newAccessToken.setToken(newAccessTokenJwt);
+        newAccessToken.setUser(user);
+        newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+        accessTokenRepository.save(newAccessToken);
+
+        return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
+    }
+    @Operation(summary = "Activate user with provided token and set password",
+            operationId = "ActivateUser",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "User activated successfully"),
+                    @ApiResponse(responseCode = "400", description = "Bad request - invalid access token"),
+                    @ApiResponse(responseCode = "404", description = "Token not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @PostMapping("/activate/{token}")
     public ResponseEntity<?> activateUser(@RequestBody ActivateUser activateUser,
                                           @PathVariable String token) {
         if (token == null) {
-            return new ResponseEntity<>("Invalid refresh token", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
         }
         AccessToken byToken = accessTokenRepository.findByToken(token);
         User user = byToken.getUser();
