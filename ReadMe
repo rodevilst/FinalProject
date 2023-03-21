@@ -5,7 +5,7 @@
 
 Документация API доступна по адресу: http://localhost:6060/swagger-ui.html
 
-Коллекция Postman https://api.postman.com/collections/22098491-88b3b80f-1d05-49dc-961b-0b54425fd0d7?access_key=PMAT-01GV8Q4DDC7NGEQZVWA1GWDQNH
+Коллекция Postman https://api.postman.com/collections/22098491-8924aa9d-63ee-4c32-9ef1-8d6d737c035a?access_key=PMAT-01GW226VXYKK1DPAXYMB87QHYB
 superuser:
 email: superadmin@gmail.com
 pass:  superadmin
