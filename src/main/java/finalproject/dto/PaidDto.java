@@ -1,67 +1,21 @@
-package finalproject.Filter;
+package finalproject.dto;
 
 import finalproject.models.Group;
-import finalproject.models.User;
 
-import java.util.Date;
-
-public class PaidFilter {
-    private Long id;
-
+public class PaidDto {
+    private String course;
+    private Group group;
     private String name;
     private String surname;
     private String email;
     private String phone;
     private Integer age;
-    private String course;
     private String courseFormat;
     private String courseType;
-    private String status;
-    private String group;
     private Integer sum;
+    private String status;
+    private String comment;
     private Integer alreadyPaid;
-    private User user;
-    private Date createdAt;
-
-    public String getGroup() {
-        return group;
-    }
-
-    public void setGroup(String group) {
-        this.group = group;
-    }
-
-    public Integer getSum() {
-        return sum;
-    }
-
-    public void setSum(Integer sum) {
-        this.sum = sum;
-    }
-
-    public Integer getAlreadyPaid() {
-        return alreadyPaid;
-    }
-
-    public void setAlreadyPaid(Integer alreadyPaid) {
-        this.alreadyPaid = alreadyPaid;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getCourse() {
         return course;
@@ -69,6 +23,14 @@ public class PaidFilter {
 
     public void setCourse(String course) {
         this.course = course;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 
     public String getName() {
@@ -127,12 +89,12 @@ public class PaidFilter {
         this.courseType = courseType;
     }
 
-    public Date getCreatedAt() {
-        return createdAt;
+    public Integer getSum() {
+        return sum;
     }
 
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
+    public void setSum(Integer sum) {
+        this.sum = sum;
     }
 
     public String getStatus() {
@@ -141,5 +103,21 @@ public class PaidFilter {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public Integer getAlreadyPaid() {
+        return alreadyPaid;
+    }
+
+    public void setAlreadyPaid(Integer alreadyPaid) {
+        this.alreadyPaid = alreadyPaid;
     }
 }

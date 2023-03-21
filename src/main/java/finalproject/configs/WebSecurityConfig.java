@@ -69,7 +69,10 @@ protected void configure(HttpSecurity http) throws Exception {
             .antMatchers("/api/auth/**").permitAll()
             .antMatchers("/api/paid/**").authenticated()
             .antMatchers("/swagger-ui.html").permitAll()
-            .antMatchers("/api/admin/**").authenticated()
+            .antMatchers("/api/admin/users").authenticated()
+            .antMatchers("/api/admin/user").authenticated()
+            .antMatchers("/api/admin/users/reg").authenticated()
+            .antMatchers("/api/admin/activate").permitAll()
             .antMatchers("**").permitAll()
             .anyRequest().authenticated();
     http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
