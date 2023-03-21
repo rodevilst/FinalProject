@@ -113,7 +113,7 @@ public class PaidController {
     public ResponseEntity<?> getAllPaid(@RequestParam(defaultValue = "1", required = false) int page,
                                         @RequestParam(required = false) String order,
                                         @RequestParam(required = false) String My,
-                                        @Parameter(hidden = true)@ModelAttribute PaidFilter filter, Authentication authentication,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) throws IOException {
+                                        @Parameter(hidden = true) @ModelAttribute PaidFilter filter, Authentication authentication, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) throws IOException {
         int pageSize = 50;
         if (order == null) {
             order = "id";
@@ -196,6 +196,7 @@ public class PaidController {
 
         return null;
     }
+
     @Operation(summary = "get excel file",
             operationId = "getexcel",
             responses = {
@@ -227,9 +228,9 @@ public class PaidController {
     public ResponseEntity<InputStreamResource> downloadPaidExcel(@RequestParam(defaultValue = "1", required = false) int page,
                                                                  @RequestParam(required = false) String order,
                                                                  @RequestParam(required = false) String My,
-                                                                 @Parameter(hidden = true)@ModelAttribute PaidFilter filter,
+                                                                 @Parameter(hidden = true) @ModelAttribute PaidFilter filter,
                                                                  Authentication authentication,
-                                                                 @Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl user) throws IOException {
+                                                                 @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) throws IOException {
 
         int pageSize = 50;
         if (order == null) {
@@ -314,18 +315,20 @@ public class PaidController {
 
             Row header = sheet.createRow(0);
             header.createCell(0).setCellValue("ID");
-            header.createCell(1).setCellValue("Group");
-            header.createCell(2).setCellValue("Course");
-            header.createCell(3).setCellValue("Name");
-            header.createCell(4).setCellValue("Surname");
-            header.createCell(5).setCellValue("Email");
-            header.createCell(6).setCellValue("Phone");
-            header.createCell(7).setCellValue("Age");
-            header.createCell(8).setCellValue("Course Format");
-            header.createCell(9).setCellValue("Course Type");
-            header.createCell(10).setCellValue("Created At");
-            header.createCell(11).setCellValue("Status");
-
+            header.createCell(1).setCellValue("Name");
+            header.createCell(2).setCellValue("Surname");
+            header.createCell(3).setCellValue("Email");
+            header.createCell(4).setCellValue("Phone");
+            header.createCell(5).setCellValue("Age");
+            header.createCell(6).setCellValue("Course");
+            header.createCell(7).setCellValue("Course Format");
+            header.createCell(8).setCellValue("Course Type");
+            header.createCell(9).setCellValue("Status");
+            header.createCell(10).setCellValue("Group");
+            header.createCell(11).setCellValue("Sum");
+            header.createCell(12).setCellValue("Already Paid");
+            header.createCell(13).setCellValue("Manager");
+            header.createCell(14).setCellValue("Created At");
             int rowNum = 1;
             for (Paid paid : results.getContent()) {
                 Row row = sheet.createRow(rowNum++);
@@ -334,60 +337,75 @@ public class PaidController {
                 } else {
                     row.createCell(0).setCellValue(" ");
                 }
-                if (paid.getGroup() != null) {
-                    row.createCell(1).setCellValue(paid.getGroup().getName());
+                if (paid.getName() != null) {
+                    row.createCell(1).setCellValue(paid.getName());
                 } else {
                     row.createCell(1).setCellValue(" ");
                 }
-                if (paid.getCourse() != null) {
-                    row.createCell(2).setCellValue(paid.getCourse());
+                if (paid.getSurname() != null) {
+                    row.createCell(2).setCellValue(paid.getSurname());
                 } else {
                     row.createCell(2).setCellValue(" ");
                 }
-                if (paid.getName() != null) {
-                    row.createCell(3).setCellValue(paid.getName());
+                if (paid.getEmail() != null) {
+                    row.createCell(3).setCellValue(paid.getEmail());
                 } else {
                     row.createCell(3).setCellValue(" ");
                 }
-                if (paid.getSurname() != null) {
-                    row.createCell(4).setCellValue(paid.getSurname());
+                if (paid.getPhone() != null) {
+                    row.createCell(4).setCellValue(paid.getPhone());
                 } else {
                     row.createCell(4).setCellValue(" ");
                 }
-                if (paid.getEmail() != null) {
-                    row.createCell(5).setCellValue(paid.getEmail());
+                if (paid.getAge() != null) {
+                    row.createCell(5).setCellValue(paid.getAge());
                 } else {
                     row.createCell(5).setCellValue(" ");
                 }
-                if (paid.getPhone() != null) {
-                    row.createCell(6).setCellValue(paid.getPhone());
+                if (paid.getCourse() != null) {
+                    row.createCell(6).setCellValue(paid.getCourse());
                 } else {
                     row.createCell(6).setCellValue(" ");
                 }
-                if (paid.getAge() != null) {
-                    row.createCell(7).setCellValue(paid.getAge());
+                if (paid.getCourseFormat() != null) {
+                    row.createCell(7).setCellValue(paid.getCourseFormat());
                 } else {
                     row.createCell(7).setCellValue(" ");
                 }
-                if (paid.getCourseFormat() != null) {
-                    row.createCell(8).setCellValue(paid.getCourseFormat());
+                if (paid.getCourseType() != null) {
+                    row.createCell(8).setCellValue(paid.getCourseType());
                 } else {
                     row.createCell(8).setCellValue(" ");
                 }
-                if (paid.getCourseType() != null) {
-                    row.createCell(9).setCellValue(paid.getCourseType());
+                if (paid.getStatus() != null) {
+                    row.createCell(9).setCellValue(paid.getStatus());
                 } else {
                     row.createCell(9).setCellValue(" ");
                 }
-                if (paid.getCreatedAt() != null) {
-                    row.createCell(10).setCellValue(paid.getCreatedAt().toString());
+                if (paid.getGroup() != null) {
+                    row.createCell(10).setCellValue(paid.getGroup().getName());
                 } else {
                     row.createCell(10).setCellValue(" ");
                 }
-                if (paid.getStatus() != null) {
-                    row.createCell(11).setCellValue(paid.getStatus());
+                if (paid.getSum() != null) {
+                    row.createCell(11).setCellValue(paid.getSum());
                 } else {
                     row.createCell(11).setCellValue(" ");
+                }
+                if (paid.getAlreadyPaid() != null) {
+                    row.createCell(12).setCellValue(paid.getAlreadyPaid());
+                } else {
+                    row.createCell(12).setCellValue(" ");
+                }
+                if (paid.getUser() != null) {
+                    row.createCell(13).setCellValue(paid.getUser().getProfile().getName());
+                } else {
+                    row.createCell(13).setCellValue(" ");
+                }
+                if (paid.getCreatedAt() != null) {
+                    row.createCell(14).setCellValue(paid.getCreatedAt().toString());
+                } else {
+                    row.createCell(14).setCellValue(" ");
                 }
 
 
