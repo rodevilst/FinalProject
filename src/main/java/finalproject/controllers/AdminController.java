@@ -71,7 +71,7 @@ public class AdminController {
             })
     @SecurityRequirement(name = "JWT")
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> getAllUsers(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<User> all = userRepository.findAll();
         all.removeIf(user -> user.getEmail().equals(userDetails.getEmail()));
         return new ResponseEntity<>(all, HttpStatus.OK);
@@ -109,7 +109,7 @@ public class AdminController {
                     @ApiResponse(responseCode = "400", description = "Bad request - missing required fields or invalid email format"),
                     @ApiResponse(responseCode = "409", description = "Email already exists")
             })
-    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest, @AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
         String randomPassword = generateRandomPassword(20);
         if (StringUtils.isBlank(signUpRequest.getEmail())
                 || StringUtils.isBlank(signUpRequest.getName())
@@ -198,7 +198,7 @@ public class AdminController {
         })
 @PostMapping("/users/recreate/{id}")
 @PreAuthorize("#userDetails.isIs_superuser()")
-public ResponseEntity<?> accessToken(@PathVariable long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
     User byId = userRepository.findById(id).orElseThrow(SecurityException::new);
     AccessToken byUser = accessTokenRepository.findByUser(byId);
     String token = byUser.getToken();
@@ -270,7 +270,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id, @AuthenticationPrinc
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/app/{id}")
-    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> optionalUser = userRepository.findById(id);
         String email = optionalUser.get().getEmail();
         List<Paid> byUserEmail = paidRepository.findByUserEmail(email);
@@ -323,7 +323,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id, @AuthenticationPrinc
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/app")
-    public ResponseEntity<?> getAppAll(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> getAppAll(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<Paid> all = paidRepository.findAll();
         Map<String, Integer> statuses = new HashMap<>();
         int inWorkCount = 0;
@@ -383,7 +383,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id, @AuthenticationPrinc
     @PatchMapping ("/block/{id}")
     public ResponseEntity<MessageResponse> blockUserById(
             @Parameter(description = "User ID", required = true)
-            @PathVariable long id,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+            @PathVariable long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
         if (byId.isPresent()){
             User user = byId.get();
@@ -402,7 +402,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id, @AuthenticationPrinc
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/unblock/{id}")
-    public ResponseEntity<?> UnblockUser(@PathVariable long id,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> UnblockUser(@PathVariable long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
         byId.get().setIs_active(true);
         userRepository.save(byId.get());

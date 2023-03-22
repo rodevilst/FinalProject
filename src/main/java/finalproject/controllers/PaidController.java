@@ -454,7 +454,7 @@ public class PaidController {
     @PreAuthorize("#user.is_active")
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<?> setPaidParam(
-            @PathVariable long id, Authentication authentication, @AuthenticationPrincipal UserDetailsImpl user, @RequestBody(required = false) PaidFilter filter) {
+            @PathVariable long id, Authentication authentication, @Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl user, @RequestBody(required = false) PaidFilter filter) {
 
         Paid paid = paidRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("paid not found"));
@@ -567,7 +567,7 @@ public class PaidController {
             })
     @PreAuthorize("#user.is_active")
     @PostMapping("/group")
-    public ResponseEntity<?> createGroup(@RequestBody Group group, @AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> createGroup(@RequestBody Group group,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
         String name = group.getName();
 
         if (name == null || name.isEmpty()) {
@@ -589,7 +589,7 @@ public class PaidController {
             })
     @PreAuthorize("#user.is_active")
     @GetMapping("/group")
-    public ResponseEntity<?> getAllGroup(@AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> getAllGroup(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl user) {
         List<Group> all = groupRepository.findAll();
         return new ResponseEntity<>(all, HttpStatus.OK);
     }
