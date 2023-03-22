@@ -13,13 +13,16 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.xmlbeans.SchemaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -94,6 +97,7 @@ public class AdminController {
         }
         return new ResponseEntity<>("User details not found", HttpStatus.NOT_FOUND);
     }
+
     @PreAuthorize("#user.isIs_superuser()")
     @PostMapping("/users/reg")
     @Operation(summary = "Create a new user",
@@ -105,7 +109,7 @@ public class AdminController {
                     @ApiResponse(responseCode = "400", description = "Bad request - missing required fields or invalid email format"),
                     @ApiResponse(responseCode = "409", description = "Email already exists")
             })
-    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest,@AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest, @AuthenticationPrincipal UserDetailsImpl user) {
         String randomPassword = generateRandomPassword(20);
         if (StringUtils.isBlank(signUpRequest.getEmail())
                 || StringUtils.isBlank(signUpRequest.getName())
@@ -147,6 +151,7 @@ public class AdminController {
         userRepository.save(newuser);
         return new ResponseEntity<>(accessTokenEntity, HttpStatus.CREATED);
     }
+
     @Operation(summary = "Access token",
             description = "Refreshes an existing access token by generating a new one and deleting the old one.",
             operationId = "accessToken",
@@ -159,7 +164,7 @@ public class AdminController {
     @PostMapping("/users/recreate")
     @PreAuthorize("#userDetails.isIs_superuser()")
 
-    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper, @AuthenticationPrincipal UserDetailsImpl userDetails) {
         String accessToken = tokenWrapper.getToken();
         AccessToken byToken = accessTokenRepository.findByToken(accessToken);
         if (byToken == null) {
@@ -183,6 +188,7 @@ public class AdminController {
 
         return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
     }
+
     @Operation(summary = "Activate user with provided token and set password",
             operationId = "ActivateUser",
             responses = {
@@ -218,8 +224,16 @@ public class AdminController {
         }
         return sb.toString();
     }
+    @PreAuthorize("#userDetails.isIs_active()")
+    @Operation(summary = "Get applications by user ID",
+            description = "Returns the count of applications and their statuses for a given user ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApplicationStatusDto.class))),
+                    @ApiResponse(responseCode = "404", description = "User not found"),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
     @GetMapping("/app/{id}")
-    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id) {
+    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id,@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> optionalUser = userRepository.findById(id);
         String email = optionalUser.get().getEmail();
         List<Paid> byUserEmail = paidRepository.findByUserEmail(email);
@@ -264,10 +278,98 @@ public class AdminController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @PreAuthorize("#userDetails.isIs_active()")
+    @Operation(summary = "Get all applications",
+            description = "Returns the count of applications and their statuses",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApplicationStatusDto.class))),
+                    @ApiResponse(responseCode = "500", description = "Internal server error")
+            })
+    @GetMapping("/app")
+    public ResponseEntity<?> getAppAll(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<Paid> all = paidRepository.findAll();
+        Map<String, Integer> statuses = new HashMap<>();
+        int inWorkCount = 0;
+        int newCount = 0;
+        int agreeCount = 0;
+        int disagreeCount = 0;
+        int doubleCount = 0;
+        int nullCount = 0;
+
+        for (Paid paid : all) {
+            if (Objects.isNull(paid.getStatus())) {
+                nullCount++;
+            } else {
+                String status = paid.getStatus().toString();
+                switch (status) {
+                    case "WORKING":
+                        inWorkCount++;
+                        break;
+                    case "NEW":
+                        newCount++;
+                        break;
+                    case "AGREE":
+                        agreeCount++;
+                        break;
+                    case "DISAGREE":
+                        disagreeCount++;
+                        break;
+                    case "DOUBLE":
+                        doubleCount++;
+                        break;
+                }
+            }
+        }
+
+        statuses.put("inWorkCount", inWorkCount);
+        statuses.put("newCount", newCount);
+        statuses.put("agreeCount", agreeCount);
+        statuses.put("disagreeCount", disagreeCount);
+        statuses.put("doubleCount", doubleCount);
+        statuses.put("nullCount", nullCount);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("totalCount", all.size());
+        response.put("statuses", statuses);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
 
 
-
-
-
+    }
+    @PreAuthorize("#userDetails.isIs_superuser()")
+    @Operation(summary = "Block user by ID",
+            description = "Blocks the user",responses = {
+            @ApiResponse(responseCode = "200", description = "User blocked successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PatchMapping ("/block/{id}")
+    public ResponseEntity<MessageResponse> blockUserById(
+            @Parameter(description = "User ID", required = true)
+            @PathVariable long id,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Optional<User> byId = userRepository.findById(id);
+        if (byId.isPresent()){
+            User user = byId.get();
+            user.setIs_active(false);
+            userRepository.save(user);
+            return new ResponseEntity<>(new MessageResponse("User blocked"), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new MessageResponse("User not found"), HttpStatus.NOT_FOUND);
+        }
+    }
+    @PreAuthorize("#userDetails.isIs_superuser()")
+    @Operation(summary = "Unblock user",
+            description = "Unblock the user",responses = {
+            @ApiResponse(responseCode = "200", description = "User unblocked successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/unblock/{id}")
+    public ResponseEntity<?> UnblockUser(@PathVariable long id,@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Optional<User> byId = userRepository.findById(id);
+        byId.get().setIs_active(true);
+        userRepository.save(byId.get());
+        return new ResponseEntity<>(new MessageResponse("user unblocked"),HttpStatus.OK);
+    }
 }
 
