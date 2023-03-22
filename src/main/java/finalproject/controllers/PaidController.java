@@ -517,15 +517,15 @@ public class PaidController {
                 checkUserAndSave(paid, byEmail);
             }
             if (filter != null &&filter.getStatus() != null) {
-                if (filter.getStatus().equals(Status.AGREE.toString())) {
+                if (filter.getStatus().toUpperCase().equals(Status.AGREE.toString())) {
                     paid.setStatus(Status.AGREE);
-                } else if (filter.getStatus().equals(Status.WORKING.toString())) {
+                } else if (filter.getStatus().toUpperCase().equals(Status.WORKING.toString())) {
                     paid.setStatus(Status.WORKING);
-                } else if (filter.getStatus().equals(Status.DISAGREE.toString())) {
+                } else if (filter.getStatus().toUpperCase().equals(Status.DISAGREE.toString())) {
                     paid.setStatus(Status.DISAGREE);
-                } else if (filter.getStatus().equals(Status.DOUBLE.toString())) {
+                } else if (filter.getStatus().toUpperCase().equals(Status.DOUBLE.toString())) {
                     paid.setStatus(Status.DOUBLE);
-                } else if (filter.getStatus().equals(Status.NEW.toString())) {
+                } else if (filter.getStatus().toUpperCase().equals(Status.NEW.toString())) {
                     paid.setStatus(Status.NEW);
                     paid.setUser(null);
                     checkUserAndSave(paid, byEmail);

@@ -1,15 +1,13 @@
 package finalproject.controllers;
 
+import finalproject.dto.ApplicationStatusDto;
 import finalproject.jwt.JwtUtils;
 import finalproject.models.*;
 import finalproject.pojo.ActivateUser;
 import finalproject.pojo.JwtResponse;
 import finalproject.pojo.MessageResponse;
 import finalproject.pojo.SignUpRequest;
-import finalproject.repository.AccessTokenRepository;
-import finalproject.repository.ProfileRepository;
-import finalproject.repository.RefreshTokenRepository;
-import finalproject.repository.UserRepository;
+import finalproject.repository.*;
 import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,9 +33,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Api(value = "Get users")
@@ -58,6 +54,9 @@ public class AdminController {
     RefreshTokenRepository refreshTokenRepository;
     @Autowired
     ProfileRepository profileRepository;
+
+    @Autowired
+    PaidRepository paidRepository;
 
     @Operation(summary = "get user",
             operationId = "getuser",
@@ -219,6 +218,55 @@ public class AdminController {
         }
         return sb.toString();
     }
+    @GetMapping("/app/{id}")
+    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        String email = optionalUser.get().getEmail();
+        List<Paid> byUserEmail = paidRepository.findByUserEmail(email);
+
+        Map<String, Integer> statuses = new HashMap<>();
+        int inWorkCount = 0;
+        int newCount = 0;
+        int agreeCount = 0;
+        int disagreeCount = 0;
+        int doubleCount = 0;
+
+        for (Paid paid : byUserEmail) {
+            String status = paid.getStatus().toString();
+            switch (status) {
+                case "WORKING":
+                    inWorkCount++;
+                    break;
+                case "NEW":
+                    newCount++;
+                    break;
+                case "AGREE":
+                    agreeCount++;
+                    break;
+                case "DISAGREE":
+                    disagreeCount++;
+                    break;
+                case "DOUBLE":
+                    doubleCount++;
+                    break;
+            }
+        }
+
+        statuses.put("inWorkCount", inWorkCount);
+        statuses.put("newCount", newCount);
+        statuses.put("agreeCount", agreeCount);
+        statuses.put("disagreeCount", disagreeCount);
+        statuses.put("doubleCount", doubleCount);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("totalCount", byUserEmail.size());
+        response.put("statuses", statuses);
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+
 
 
 }
