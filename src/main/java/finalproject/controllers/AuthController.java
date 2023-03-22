@@ -94,7 +94,6 @@ public class AuthController {
                     .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
             user.setLast_login(new Date());
-            user.setIs_active(true);
             userRepository.save(user);
 
             String accessTokenJwt = jwtUtils.generateAccessToken(user);
@@ -201,7 +200,6 @@ public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
     }
     private JwtResponse createJwtResponse(User user, String accessToken, String refreshToken) {
         user.setLast_login(new Date());
-        user.setIs_active(true);
         userRepository.save(user);
 
         JwtResponse jwtResponse = new JwtResponse();
