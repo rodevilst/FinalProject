@@ -152,42 +152,79 @@ public class AdminController {
         return new ResponseEntity<>(accessTokenEntity, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Access token",
-            description = "Refreshes an existing access token by generating a new one and deleting the old one.",
-            operationId = "accessToken",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OK",
-                            content = @Content(mediaType = "application/json",
-                                    schema = @Schema(implementation = TokenWrapper.class))),
-                    @ApiResponse(responseCode = "400", description = "Bad request - invalid access token")
-            })
-    @PostMapping("/users/recreate")
-    @PreAuthorize("#userDetails.isIs_superuser()")
-
-    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper, @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        String accessToken = tokenWrapper.getToken();
-        AccessToken byToken = accessTokenRepository.findByToken(accessToken);
-        if (byToken == null) {
-            return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
-        }
-
-        User user = byToken.getUser();
-        String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
-
-        LocalDateTime now = LocalDateTime.now();
-        AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
-        if (oldAccessToken != null) {
-            accessTokenRepository.delete(oldAccessToken);
-        }
-
-        AccessToken newAccessToken = new AccessToken();
-        newAccessToken.setToken(newAccessTokenJwt);
-        newAccessToken.setUser(user);
-        newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-        accessTokenRepository.save(newAccessToken);
-
-        return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
+//    @Operation(summary = "Access token",
+//            description = "Refreshes an existing access token by generating a new one and deleting the old one.",
+//            operationId = "accessToken",
+//            responses = {
+//                    @ApiResponse(responseCode = "200", description = "OK",
+//                            content = @Content(mediaType = "application/json",
+//                                    schema = @Schema(implementation = TokenWrapper.class))),
+//                    @ApiResponse(responseCode = "400", description = "Bad request - invalid access token")
+//            })
+//    @PostMapping("/users/recreate")
+//    @PreAuthorize("#userDetails.isIs_superuser()")
+//    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+//        String accessToken = tokenWrapper.getToken();
+//        AccessToken byToken = accessTokenRepository.findByToken(accessToken);
+//        if (byToken == null) {
+//            return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
+//        }
+//
+//        User user = byToken.getUser();
+//        String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
+//
+//        LocalDateTime now = LocalDateTime.now();
+//        AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
+//        if (oldAccessToken != null) {
+//            accessTokenRepository.delete(oldAccessToken);
+//        }
+//
+//        AccessToken newAccessToken = new AccessToken();
+//        newAccessToken.setToken(newAccessTokenJwt);
+//        newAccessToken.setUser(user);
+//        newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+//        accessTokenRepository.save(newAccessToken);
+//
+//        return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
+//    }
+@Operation(summary = "Access token",
+        description = "Generate new token for registration",
+        operationId = "accessToken",
+        responses = {
+                @ApiResponse(responseCode = "200", description = "OK",
+                        content = @Content(mediaType = "application/json",
+                                schema = @Schema(implementation = TokenWrapper.class))),
+                @ApiResponse(responseCode = "400", description = "Bad request - user not found")
+        })
+@PostMapping("/users/recreate/{id}")
+@PreAuthorize("#userDetails.isIs_superuser()")
+public ResponseEntity<?> accessToken(@PathVariable long id, @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    User byId = userRepository.findById(id).orElseThrow(SecurityException::new);
+    AccessToken byUser = accessTokenRepository.findByUser(byId);
+    String token = byUser.getToken();
+    AccessToken byToken = accessTokenRepository.findByToken(token);
+    if (byToken == null) {
+        return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
     }
+
+    User user = byToken.getUser();
+    String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
+
+    LocalDateTime now = LocalDateTime.now();
+    AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
+    if (oldAccessToken != null) {
+        accessTokenRepository.delete(oldAccessToken);
+    }
+
+    AccessToken newAccessToken = new AccessToken();
+    newAccessToken.setToken(newAccessTokenJwt);
+    newAccessToken.setUser(user);
+    newAccessToken.setCreatedAt(LocalDateTime.now());
+    newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+    accessTokenRepository.save(newAccessToken);
+
+    return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
+}
 
     @Operation(summary = "Activate user with provided token and set password",
             operationId = "ActivateUser",

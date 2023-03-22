@@ -13,5 +13,6 @@ import java.util.List;
 public interface AccessTokenRepository extends JpaRepository<AccessToken, Long> {
     AccessToken findByToken(String token);
     List<AccessToken> findAllByUserId(Long userId);
+    AccessToken findByUser(User user);
     AccessToken findByUserAndExpiresAtAfter(User user, LocalDateTime expiresAt);
 }
