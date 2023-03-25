@@ -65,6 +65,7 @@ public class AuthController {
     AccessTokenRepository accessTokenRepository;
     @Autowired
     RefreshTokenRepository refreshTokenRepository;
+
     @Operation(summary = "Authenticate user",
             operationId = "authUser",
             responses = {
@@ -80,6 +81,10 @@ public class AuthController {
     public ResponseEntity<?> authUser(@RequestBody LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
+        User byEmail = userRepository.findByEmail(email).orElseThrow(SecurityException::new);
+        if (!byEmail.isIs_active()){
+            return new ResponseEntity<>(new MessageResponse("you are blocked"),HttpStatus.BAD_REQUEST);
+        }
 
         if (StringUtils.isBlank(password)) {
             return ResponseEntity.badRequest().body("password can`t be null");
@@ -87,7 +92,7 @@ public class AuthController {
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword()));
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             User user = userRepository.findByEmail(email)
@@ -102,10 +107,7 @@ public class AuthController {
             AccessToken accessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
             RefreshToken refreshToken = refreshTokenRepository.findByUserAndExpiresAtAfter(user, LocalDateTime.now());
 
-            if (accessToken != null) {
-                JwtResponse jwtResponse = createJwtResponse(user, accessToken.getToken(), refreshToken.getToken());
-                return ResponseEntity.ok(jwtResponse);
-            }
+
             if (accessToken == null && refreshToken != null) {
                 String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
                 AccessToken newAccessToken = new AccessToken();
@@ -115,6 +117,20 @@ public class AuthController {
                 newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
                 accessTokenRepository.save(newAccessToken);
                 return ResponseEntity.ok(createJwtResponse(user, newAccessTokenJwt, refreshToken.getToken()));
+            }
+            if (accessToken != null) {
+                JwtResponse jwtResponse = createJwtResponse(user, accessToken.getToken(), refreshToken.getToken());
+                return ResponseEntity.ok(jwtResponse);
+            }
+            if (refreshToken == null) {
+                String newRefreshTokenJwt = jwtUtils.generateRefreshToken(user);
+                RefreshToken newRefreshToken = new RefreshToken();
+                newRefreshToken.setToken(newRefreshTokenJwt);
+                newRefreshToken.setUser(user);
+                newRefreshToken.setCreatedAt(LocalDateTime.now());
+                newRefreshToken.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+                refreshTokenRepository.save(newRefreshToken);
+                return ResponseEntity.ok(createJwtResponse(user, accessToken.getToken(), newRefreshTokenJwt));
             }
             if (accessToken == null && refreshToken == null) {
                 AccessToken newAccessToken = createAccessToken(user, accessTokenJwt);
@@ -146,42 +162,43 @@ public class AuthController {
         }
     }
 
-@Operation(summary = "give new token",
-        operationId = "newtoken",
-        responses = {
-                @ApiResponse(responseCode = "200", description = "OK",
-                        content = @Content(mediaType = "application/json",
-                                schema = @Schema(implementation = JwtResponse.class))),
-                @ApiResponse(responseCode = "400", description = "Bad request")
-        })
-@PostMapping("/refresh")
-public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
-    String refreshToken = tokenWrapper.getToken();
-    RefreshToken byToken = refreshTokenRepository.findByToken(refreshToken);
-    if (byToken == null) {
-        return new ResponseEntity<>("Invalid refresh token", HttpStatus.BAD_REQUEST);
+    @Operation(summary = "give new token",
+            operationId = "newtoken",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = JwtResponse.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request")
+            })
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
+        String refreshToken = tokenWrapper.getToken();
+        RefreshToken byToken = refreshTokenRepository.findByToken(refreshToken);
+        if (byToken == null) {
+            return new ResponseEntity<>("Invalid refresh token", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = byToken.getUser();
+        String accessTokenJwt = jwtUtils.generateAccessToken(user);
+        String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
+
+        LocalDateTime now = LocalDateTime.now();
+        AccessToken accessTokens = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
+        if (accessTokens != null) {
+            accessTokenRepository.delete(accessTokens);
+        }
+
+        if (byToken.getExpiresAt().isBefore(now)) {
+            return new ResponseEntity<>("Refresh token has expired", HttpStatus.BAD_REQUEST);
+        } else {
+            refreshTokenRepository.delete(byToken);
+            RefreshToken refreshTokenEntity = createRefreshToken(user, refreshTokenJwt);
+            AccessToken accessToken = createAccessToken(user, accessTokenJwt);
+            JwtResponse jwtResponse = createJwtResponse(user, accessToken.getToken(), refreshTokenEntity.getToken());
+            return new ResponseEntity<>(jwtResponse, HttpStatus.OK);
+        }
     }
 
-    User user = byToken.getUser();
-    String accessTokenJwt = jwtUtils.generateAccessToken(user);
-    String refreshTokenJwt = jwtUtils.generateRefreshToken(user);
-
-    LocalDateTime now = LocalDateTime.now();
-    AccessToken accessTokens = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
-    if (accessTokens != null) {
-        accessTokenRepository.delete(accessTokens);
-    }
-
-    if (byToken.getExpiresAt().isBefore(now)) {
-        return new ResponseEntity<>("Refresh token has expired", HttpStatus.BAD_REQUEST);
-    } else {
-        refreshTokenRepository.delete(byToken);
-        RefreshToken refreshTokenEntity = createRefreshToken(user, refreshTokenJwt);
-        AccessToken accessToken = createAccessToken(user, accessTokenJwt);
-        JwtResponse jwtResponse = createJwtResponse(user,accessToken.getToken(),refreshTokenEntity.getToken());
-        return new ResponseEntity<>(jwtResponse,HttpStatus.OK);
-    }
-}
     private AccessToken createAccessToken(User user, String accessTokenJwt) {
         AccessToken accessTokenEntity = new AccessToken();
         accessTokenEntity.setToken(accessTokenJwt);
@@ -190,7 +207,8 @@ public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
         accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
         return accessTokenRepository.save(accessTokenEntity);
     }
-    private RefreshToken createRefreshToken(User user,String refreshTokenJwt) {
+
+    private RefreshToken createRefreshToken(User user, String refreshTokenJwt) {
         RefreshToken refreshTokenEntity = new RefreshToken();
         refreshTokenEntity.setToken(refreshTokenJwt);
         refreshTokenEntity.setUser(user);
@@ -198,6 +216,7 @@ public ResponseEntity<?> refreshToken(@RequestBody TokenWrapper tokenWrapper) {
         refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
         return refreshTokenRepository.save(refreshTokenEntity);
     }
+
     private JwtResponse createJwtResponse(User user, String accessToken, String refreshToken) {
         user.setLast_login(new Date());
         userRepository.save(user);

@@ -21,11 +21,29 @@ public class PaidFilter {
     private Integer sum;
     private Integer alreadyPaid;
     private User user;
-    private Date createdAt;
+
+    private String startDate;
+    private String endDate;
     private String comment;
 
     public String getComment() {
         return comment;
+    }
+
+    public String getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
+
+    public String getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
     }
 
     public void setComment(String comment) {
@@ -136,13 +154,6 @@ public class PaidFilter {
         this.courseType = courseType;
     }
 
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
 
     public String getStatus() {
         return status;

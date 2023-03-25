@@ -385,7 +385,11 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
             @Parameter(description = "User ID", required = true)
             @PathVariable long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
-        if (byId.isPresent()){
+        if (userDetails.getId()==byId.get().getId()){
+            return new ResponseEntity<>(new MessageResponse("you cant block yourself"),HttpStatus.BAD_REQUEST);
+        }
+
+            if (byId.isPresent()){
             User user = byId.get();
             user.setIs_active(false);
             userRepository.save(user);

@@ -58,6 +58,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -116,7 +118,8 @@ public class PaidController {
             order = "id";
         }
         Sort sort = order.startsWith("-") ? Sort.by(order.substring(1)).descending() : Sort.by(order).ascending();
-        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
+
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Paid> cq = cb.createQuery(Paid.class);
@@ -162,12 +165,45 @@ public class PaidController {
             if (filter.getCourseType() != null) {
                 predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
             }
-            if (filter.getCreatedAt() != null) {
-                predicates.add(cb.equal(root.get("createdAt"), filter.getCreatedAt()));
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+            Date startDate = null;
+            Date endDate = null;
+            if (filter.getStartDate() != null) {
+                try {
+                    startDate = dateFormat.parse(filter.getStartDate());
+                } catch (ParseException e) {
+                }
             }
+            if (filter.getEndDate() != null) {
+                try {
+                    endDate = dateFormat.parse(filter.getEndDate());
+                } catch (ParseException e) {
+                }
+            }
+
+            if (startDate != null && endDate != null) {
+                predicates.add(cb.between(root.get("createdAt"), startDate, endDate));
+            } else if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            } else if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
+
+
+
             if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+                List<Status> allowedStatuses = Arrays.asList(Status.AGREE, Status.DISAGREE, Status.NEW, Status.WORKING, Status.DOUBLE);
+                try {
+                    Status status = Status.valueOf(filter.getStatus().toUpperCase());
+                    if (!allowedStatuses.contains(status)) {
+                        return new ResponseEntity<>("Invalid status. Allowed statuses are: " + allowedStatuses, HttpStatus.BAD_REQUEST);
+                    }
+                    predicates.add(cb.equal(root.get("status"), status));
+                } catch (IllegalArgumentException e) {
+                    return new ResponseEntity<>("Invalid status. Allowed statuses are: " + allowedStatuses, HttpStatus.BAD_REQUEST);
+                }
             }
+
 
             cq.where(predicates.toArray(new Predicate[0]));
 
@@ -222,19 +258,16 @@ public class PaidController {
     })
 
     @GetMapping("/excel")
-    public ResponseEntity<InputStreamResource> downloadPaidExcel(@RequestParam(defaultValue = "1", required = false) int page,
-                                                                 @RequestParam(required = false) String order,
-                                                                 @RequestParam(required = false) String My,
-                                                                 @Parameter(hidden = true) @ModelAttribute PaidFilter filter,
-                                                                 Authentication authentication,
-                                                                 @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) throws IOException {
+    public ResponseEntity<?> downloadPaidExcel(
+            @RequestParam(required = false) String order,
+            @RequestParam(required = false) String My,
+            @Parameter(hidden = true) @ModelAttribute PaidFilter filter,
+            Authentication authentication,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) throws IOException {
 
-        int pageSize = 50;
         if (order == null) {
             order = "id";
         }
-        Sort sort = order.startsWith("-") ? Sort.by(order.substring(1)).descending() : Sort.by(order).ascending();
-        Pageable pageable = PageRequest.of(page, pageSize, sort);
 
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Paid> cq = cb.createQuery(Paid.class);
@@ -280,12 +313,39 @@ public class PaidController {
             if (filter.getCourseType() != null) {
                 predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
             }
-            if (filter.getCreatedAt() != null) {
-                predicates.add(cb.equal(root.get("createdAt"), filter.getCreatedAt()));
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+            Date startDate = null;
+            Date endDate = null;
+            if (filter.getStartDate() != null) {
+                try {
+                    startDate = dateFormat.parse(filter.getStartDate());
+                } catch (ParseException e) {
+                }
             }
+            if (filter.getEndDate() != null) {
+                try {
+                    endDate = dateFormat.parse(filter.getEndDate());
+                } catch (ParseException e) {
+                }
+            }
+
+            if (startDate != null && endDate != null) {
+                predicates.add(cb.between(root.get("createdAt"), startDate, endDate));
+            } else if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            } else if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
+
+
             if (filter.getStatus() != null) {
-                predicates.add(cb.equal(root.get("status"), filter.getStatus()));
+                List<Status> allowedStatuses = Arrays.asList(Status.AGREE, Status.DISAGREE, Status.NEW, Status.WORKING, Status.DOUBLE);
+                if (!allowedStatuses.contains(Status.valueOf(filter.getStatus().toUpperCase()))) {
+                    return new ResponseEntity<>("Invalid status. Allowed statuses are: " + allowedStatuses, HttpStatus.BAD_REQUEST);
+                }
+                predicates.add(cb.equal(root.get("status"), Status.valueOf(filter.getStatus())));
             }
+
 
             cq.where(predicates.toArray(new Predicate[0]));
 
@@ -296,8 +356,7 @@ public class PaidController {
             }
 
             TypedQuery<Paid> query = em.createQuery(cq);
-            query.setFirstResult((page - 1) * pageSize);
-            query.setMaxResults(pageSize);
+
             List<Paid> resultList = query.getResultList();
 
             CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
@@ -305,7 +364,7 @@ public class PaidController {
             countQuery.where(predicates.toArray(new Predicate[0]));
             Long count = em.createQuery(countQuery).getSingleResult();
 
-            Page<Paid> results = new PageImpl<>(resultList, pageable, count);
+            Page<Paid> results = new PageImpl<>(resultList);
 
             Workbook workbook = new XSSFWorkbook();
             Sheet sheet = workbook.createSheet("Paid");
