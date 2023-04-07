@@ -105,7 +105,8 @@ public class PaidController {
             @Parameter(name = "group", in = ParameterIn.QUERY),
             @Parameter(name = "courseFormat", in = ParameterIn.QUERY),
             @Parameter(name = "courseType", in = ParameterIn.QUERY),
-            @Parameter(name = "createdAt", in = ParameterIn.QUERY),
+            @Parameter(name = "startDate", in = ParameterIn.QUERY),
+            @Parameter(name = "endDate", in = ParameterIn.QUERY),
             @Parameter(name = "status", in = ParameterIn.QUERY),
             @Parameter(name = "order", description = "Sort order (-name for descending)", in = ParameterIn.QUERY)
     })
@@ -177,6 +178,10 @@ public class PaidController {
             if (filter.getEndDate() != null) {
                 try {
                     endDate = dateFormat.parse(filter.getEndDate());
+                    Calendar c = Calendar.getInstance();
+                    c.setTime(endDate);
+                    c.add(Calendar.DATE, 1);
+                    endDate = c.getTime();
                 } catch (ParseException e) {
                 }
             }
@@ -186,8 +191,9 @@ public class PaidController {
             } else if (startDate != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
             } else if (endDate != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+                predicates.add(cb.lessThan(root.get("createdAt"), endDate));
             }
+
 
 
 
@@ -252,7 +258,8 @@ public class PaidController {
             @Parameter(name = "group", in = ParameterIn.QUERY),
             @Parameter(name = "courseFormat", in = ParameterIn.QUERY),
             @Parameter(name = "courseType", in = ParameterIn.QUERY),
-            @Parameter(name = "createdAt", in = ParameterIn.QUERY),
+            @Parameter(name = "startDate", in = ParameterIn.QUERY),
+            @Parameter(name = "endDate", in = ParameterIn.QUERY),
             @Parameter(name = "status", in = ParameterIn.QUERY),
             @Parameter(name = "order", description = "Sort order (-name for descending)", in = ParameterIn.QUERY)
     })
@@ -558,6 +565,11 @@ public class PaidController {
             if (filter != null &&filter.getPhone() != null) {
                 paid.setPhone(filter.getPhone());
                 checkUserAndSave(paid, byEmail);
+            }
+            if (filter.getGroup() != null) {
+                Group byName = groupRepository.findByName(filter.getGroup());
+                paid.setGroup(byName);
+                checkUserAndSave(paid,byEmail);
             }
             if (filter != null &&filter.getAge() != null) {
                 paid.setAge(filter.getAge());

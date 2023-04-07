@@ -196,7 +196,7 @@ public class AdminController {
                                 schema = @Schema(implementation = TokenWrapper.class))),
                 @ApiResponse(responseCode = "400", description = "Bad request - user not found")
         })
-@PostMapping("/users/recreate/{id}")
+@PostMapping("/users/re_token/{id}")
 @PreAuthorize("#userDetails.isIs_superuser()")
 public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
     User byId = userRepository.findById(id).orElseThrow(SecurityException::new);
@@ -269,7 +269,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
                     @ApiResponse(responseCode = "404", description = "User not found"),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @GetMapping("/app/{id}")
+    @GetMapping("/statistics/users/{id}")
     public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> optionalUser = userRepository.findById(id);
         String email = optionalUser.get().getEmail();
@@ -322,7 +322,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
                     @ApiResponse(responseCode = "200", description = "Successful response", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApplicationStatusDto.class))),
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
-    @GetMapping("/app")
+    @GetMapping("/statistics/orders")
     public ResponseEntity<?> getAppAll(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<Paid> all = paidRepository.findAll();
         Map<String, Integer> statuses = new HashMap<>();
