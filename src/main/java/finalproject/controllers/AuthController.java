@@ -122,7 +122,7 @@ public class AuthController {
                 JwtResponse jwtResponse = createJwtResponse(user, accessToken.getToken(), refreshToken.getToken());
                 return ResponseEntity.ok(jwtResponse);
             }
-            if (refreshToken == null) {
+            if (accessToken!=null && refreshToken == null) {
                 String newRefreshTokenJwt = jwtUtils.generateRefreshToken(user);
                 RefreshToken newRefreshToken = new RefreshToken();
                 newRefreshToken.setToken(newRefreshTokenJwt);
