@@ -1,8 +1,10 @@
 package finalproject.pojo;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
 public class LoginRequest {
+    @Email(message = "Invalid email")
     private String email;
     @NotBlank
     private String password;

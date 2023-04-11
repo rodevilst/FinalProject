@@ -508,8 +508,8 @@ public class PaidController {
         return new ResponseEntity<>(one, HttpStatus.OK);
     }
 
-    @Operation(summary = "get all paid",
-            operationId = "getAllPaid",
+    @Operation(summary = "patch paid by id",
+            operationId = "patchbyid",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(mediaType = "application/json",

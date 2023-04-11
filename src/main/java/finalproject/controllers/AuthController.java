@@ -15,6 +15,7 @@ import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 
 import org.springframework.web.bind.annotation.*;
 
@@ -81,7 +83,12 @@ public class AuthController {
     public ResponseEntity<?> authUser(@RequestBody LoginRequest loginRequest) {
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
+        boolean isEmailValid = EmailValidator.getInstance().isValid(email); // проверяем валидность почты
+        if (!isEmailValid) {
+            return ResponseEntity.badRequest().body("Invalid email"); // возвращаем ошибку, если почта неверна
+        }
         User byEmail = userRepository.findByEmail(email).orElseThrow(SecurityException::new);
+
         if (!byEmail.isIs_active()){
             return new ResponseEntity<>(new MessageResponse("you are blocked"),HttpStatus.BAD_REQUEST);
         }
@@ -89,6 +96,7 @@ public class AuthController {
         if (StringUtils.isBlank(password)) {
             return ResponseEntity.badRequest().body("password can`t be null");
         }
+
 
         try {
             Authentication authentication = authenticationManager.authenticate(
