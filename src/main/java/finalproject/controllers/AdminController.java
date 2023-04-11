@@ -203,6 +203,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
     AccessToken byUser = accessTokenRepository.findByUser(byId);
     String token = byUser.getToken();
     AccessToken byToken = accessTokenRepository.findByToken(token);
+    accessTokenRepository.delete(byToken);
     if (byToken == null) {
         return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
     }
