@@ -71,7 +71,7 @@ public class AdminController {
             })
     @SecurityRequirement(name = "JWT")
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> getAllUsers(@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<User> all = userRepository.findAll();
         all.removeIf(user -> user.getEmail().equals(userDetails.getEmail()));
         return new ResponseEntity<>(all, HttpStatus.OK);
@@ -109,7 +109,7 @@ public class AdminController {
                     @ApiResponse(responseCode = "400", description = "Bad request - missing required fields or invalid email format"),
                     @ApiResponse(responseCode = "409", description = "Email already exists")
             })
-    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> createUser(@RequestBody SignUpRequest signUpRequest, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
         String randomPassword = generateRandomPassword(20);
         if (StringUtils.isBlank(signUpRequest.getEmail())
                 || StringUtils.isBlank(signUpRequest.getName())
@@ -152,7 +152,7 @@ public class AdminController {
         return new ResponseEntity<>(accessTokenEntity, HttpStatus.CREATED);
     }
 
-//    @Operation(summary = "Access token",
+    //    @Operation(summary = "Access token",
 //            description = "Refreshes an existing access token by generating a new one and deleting the old one.",
 //            operationId = "accessToken",
 //            responses = {
@@ -187,45 +187,45 @@ public class AdminController {
 //
 //        return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
 //    }
-@Operation(summary = "Access token",
-        description = "Generate new token for registration",
-        operationId = "accessToken",
-        responses = {
-                @ApiResponse(responseCode = "200", description = "OK",
-                        content = @Content(mediaType = "application/json",
-                                schema = @Schema(implementation = TokenWrapper.class))),
-                @ApiResponse(responseCode = "400", description = "Bad request - user not found")
-        })
-@PostMapping("/users/re_token/{id}")
-@PreAuthorize("#userDetails.isIs_superuser()")
-public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
-    User byId = userRepository.findById(id).orElseThrow(SecurityException::new);
-    AccessToken byUser = accessTokenRepository.findByUser(byId);
-    String token = byUser.getToken();
-    AccessToken byToken = accessTokenRepository.findByToken(token);
-    accessTokenRepository.delete(byToken);
-    if (byToken == null) {
-        return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
+    @Operation(summary = "Access token",
+            description = "Generate new token for registration",
+            operationId = "accessToken",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK",
+                            content = @Content(mediaType = "application/json",
+                                    schema = @Schema(implementation = TokenWrapper.class))),
+                    @ApiResponse(responseCode = "400", description = "Bad request - user not found")
+            })
+    @PostMapping("/users/re_token/{id}")
+    @PreAuthorize("#userDetails.isIs_superuser()")
+    public ResponseEntity<?> accessToken(@PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        User byId = userRepository.findById(id).orElseThrow(SecurityException::new);
+        AccessToken byUser = accessTokenRepository.findByUser(byId);
+        String token = byUser.getToken();
+        AccessToken byToken = accessTokenRepository.findByToken(token);
+        accessTokenRepository.delete(byToken);
+        if (byToken == null) {
+            return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = byToken.getUser();
+        String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
+
+        LocalDateTime now = LocalDateTime.now();
+        AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
+        if (oldAccessToken != null) {
+            accessTokenRepository.delete(oldAccessToken);
+        }
+
+        AccessToken newAccessToken = new AccessToken();
+        newAccessToken.setToken(newAccessTokenJwt);
+        newAccessToken.setUser(user);
+        newAccessToken.setCreatedAt(LocalDateTime.now());
+        newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+        accessTokenRepository.save(newAccessToken);
+
+        return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
     }
-
-    User user = byToken.getUser();
-    String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
-
-    LocalDateTime now = LocalDateTime.now();
-    AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
-    if (oldAccessToken != null) {
-        accessTokenRepository.delete(oldAccessToken);
-    }
-
-    AccessToken newAccessToken = new AccessToken();
-    newAccessToken.setToken(newAccessTokenJwt);
-    newAccessToken.setUser(user);
-    newAccessToken.setCreatedAt(LocalDateTime.now());
-    newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-    accessTokenRepository.save(newAccessToken);
-
-    return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
-}
 
     @Operation(summary = "Activate user with provided token and set password",
             operationId = "ActivateUser",
@@ -262,6 +262,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
         }
         return sb.toString();
     }
+
     @PreAuthorize("#userDetails.isIs_active()")
     @Operation(summary = "Get applications by user ID",
             description = "Returns the count of applications and their statuses for a given user ID",
@@ -271,7 +272,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/statistics/users/{id}")
-    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> getApplicationsByUserId(@PathVariable Long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> optionalUser = userRepository.findById(id);
         String email = optionalUser.get().getEmail();
         List<Paid> byUserEmail = paidRepository.findByUserEmail(email);
@@ -316,6 +317,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     @PreAuthorize("#userDetails.isIs_active()")
     @Operation(summary = "Get all applications",
             description = "Returns the count of applications and their statuses",
@@ -324,7 +326,7 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
                     @ApiResponse(responseCode = "500", description = "Internal server error")
             })
     @GetMapping("/statistics/orders")
-    public ResponseEntity<?> getAppAll(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> getAppAll(@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         List<Paid> all = paidRepository.findAll();
         Map<String, Integer> statuses = new HashMap<>();
         int inWorkCount = 0;
@@ -374,23 +376,24 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
 
 
     }
+
     @PreAuthorize("#userDetails.isIs_superuser()")
     @Operation(summary = "Block user by ID",
-            description = "Blocks the user",responses = {
+            description = "Blocks the user", responses = {
             @ApiResponse(responseCode = "200", description = "User blocked successfully"),
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @PatchMapping ("/block/{id}")
+    @PatchMapping("/block/{id}")
     public ResponseEntity<MessageResponse> blockUserById(
             @Parameter(description = "User ID", required = true)
-            @PathVariable long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
+            @PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
-        if (userDetails.getId()==byId.get().getId()){
-            return new ResponseEntity<>(new MessageResponse("you cant block yourself"),HttpStatus.BAD_REQUEST);
+        if (userDetails.getId() == byId.get().getId()) {
+            return new ResponseEntity<>(new MessageResponse("you cant block yourself"), HttpStatus.BAD_REQUEST);
         }
 
-            if (byId.isPresent()){
+        if (byId.isPresent()) {
             User user = byId.get();
             user.setIs_active(false);
             userRepository.save(user);
@@ -399,19 +402,41 @@ public ResponseEntity<?> accessToken(@PathVariable long id,@Parameter(hidden = t
             return new ResponseEntity<>(new MessageResponse("User not found"), HttpStatus.NOT_FOUND);
         }
     }
+
     @PreAuthorize("#userDetails.isIs_superuser()")
     @Operation(summary = "Unblock user",
-            description = "Unblock the user",responses = {
+            description = "Unblock the user", responses = {
             @ApiResponse(responseCode = "200", description = "User unblocked successfully"),
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/unblock/{id}")
-    public ResponseEntity<?> UnblockUser(@PathVariable long id,@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> UnblockUser(@PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
         byId.get().setIs_active(true);
         userRepository.save(byId.get());
-        return new ResponseEntity<>(new MessageResponse("user unblocked"),HttpStatus.OK);
+        return new ResponseEntity<>(new MessageResponse("user unblocked"), HttpStatus.OK);
+    }
+    @PreAuthorize("#userDetails.isIs_superuser()")
+    @Operation(summary = "delete user",
+            description = "delete the user", responses = {
+            @ApiResponse(responseCode = "200", description = "User deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/delete/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Optional<User> byId = userRepository.findById(id);
+        if (userDetails.getId() == byId.get().getId()) {
+            return new ResponseEntity<>(new MessageResponse("you cant delete yourself"), HttpStatus.BAD_REQUEST);
+        }
+        User user = byId.get();
+        List<AccessToken> allByUserId = accessTokenRepository.findAllByUserId(user.getId());
+        accessTokenRepository.deleteAll(allByUserId);
+        List<RefreshToken> allByUserId1 = refreshTokenRepository.findAllByUserId(user.getId());
+        refreshTokenRepository.deleteAll(allByUserId1);
+        userRepository.delete(user);
+        return new ResponseEntity<>(new MessageResponse("user deleted"), HttpStatus.OK);
     }
 }
 
