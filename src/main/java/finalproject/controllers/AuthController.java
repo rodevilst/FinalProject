@@ -1,22 +1,22 @@
 package finalproject.controllers;
 
+import finalproject.bot.Bot;
 import finalproject.jwt.JwtUtils;
 import finalproject.models.*;
 import finalproject.pojo.JwtResponse;
 import finalproject.pojo.LoginRequest;
 import finalproject.pojo.MessageResponse;
-import finalproject.pojo.SignUpRequest;
 import finalproject.repository.AccessTokenRepository;
 import finalproject.repository.ProfileRepository;
 import finalproject.repository.RefreshTokenRepository;
 import finalproject.repository.UserRepository;
-import finalproject.service.UserDetailsImpl;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,7 +25,6 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 
@@ -33,16 +32,13 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-
-
-import org.slf4j.Logger;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Api(value = "Reg && auth controller")
 @RestController
@@ -67,6 +63,10 @@ public class AuthController {
     AccessTokenRepository accessTokenRepository;
     @Autowired
     RefreshTokenRepository refreshTokenRepository;
+    Bot bot = new Bot();
+    SendMessage message = new SendMessage();
+    String chat_id = "243837581";
+
 
     @Operation(summary = "Authenticate user",
             operationId = "authUser",
@@ -81,6 +81,17 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authUser(@RequestBody LoginRequest loginRequest) {
+        String email1 = loginRequest.getEmail();
+        String botResponse = email1 +" "+ LocalDateTime.now();
+        message.setChatId(chat_id);
+        message.setText(botResponse);
+
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+
         String email = loginRequest.getEmail();
         String password = loginRequest.getPassword();
         boolean isEmailValid = EmailValidator.getInstance().isValid(email); // проверяем валидность почты

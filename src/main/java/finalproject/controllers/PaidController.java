@@ -1,9 +1,11 @@
 package finalproject.controllers;
 
 import finalproject.Filter.PaidFilter;
+import finalproject.bot.Bot;
 import finalproject.dto.PaidDto;
 import finalproject.models.*;
 import finalproject.pojo.JwtResponse;
+import finalproject.pojo.MessageResponse;
 import finalproject.repository.CommentRepository;
 import finalproject.repository.GroupRepository;
 import finalproject.repository.PaidRepository;
@@ -44,9 +46,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -81,6 +86,9 @@ public class PaidController {
     private EntityManager em;
     @Autowired
     CommentRepository commentRepository;
+    Bot bot = new Bot();
+    SendMessage message = new SendMessage();
+    String chat_id = "243837581";
 
     @Operation(summary = "get all paid",
             operationId = "getAllPaid",
@@ -118,10 +126,12 @@ public class PaidController {
         if (order == null) {
             order = "id";
         }
+        message.setChatId(chat_id);
+
         Sort sort = order.startsWith("-") ? Sort.by(order.substring(1)).descending() : Sort.by(order).ascending();
         Pageable pageable = PageRequest.of(page - 1, pageSize, sort);
 
-
+        List<String> filterParams = new ArrayList<>();
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Paid> cq = cb.createQuery(Paid.class);
         Root<Paid> root = cq.from(Paid.class);
@@ -133,38 +143,51 @@ public class PaidController {
 
             if (My != null) {
                 predicates.add(cb.equal(root.get("user").get("email"), currentUser));
+                filterParams.add("My=" + My + currentUser);
             }
             if (filter.getId() != null) {
+                filterParams.add("id=" + filter.getId());
+                if (!paidRepository.existsById(filter.getId())) {
+                    return new ResponseEntity<>(new MessageResponse("Entity with id " + filter.getId() + " not found"),HttpStatus.NOT_FOUND);
+                }
                 predicates.add(cb.equal(root.get("id"), filter.getId()));
             }
             if (filter.getGroup() != null) {
                 Group byName = groupRepository.findByName(filter.getGroup());
+                filterParams.add("group=" + filter.getGroup());
                 predicates.add(cb.equal(root.get("group"), byName));
-
             }
             if (filter.getCourse() != null) {
                 predicates.add(cb.like(root.get("course"), "%" + filter.getCourse() + "%"));
+                filterParams.add("course=" + filter.getCourse());
             }
             if (filter.getName() != null) {
                 predicates.add(cb.like(root.get("name"), "%" + filter.getName() + "%"));
+                filterParams.add("name=" + filter.getName());
             }
             if (filter.getSurname() != null) {
                 predicates.add(cb.like(root.get("surname"), "%" + filter.getSurname() + "%"));
+                filterParams.add("surname=" + filter.getSurname());
             }
             if (filter.getEmail() != null) {
                 predicates.add(cb.like(root.get("email"), "%" + filter.getEmail() + "%"));
+                filterParams.add("email=" + filter.getEmail());
             }
             if (filter.getPhone() != null) {
                 predicates.add(cb.like(root.get("phone"), "%" + filter.getPhone() + "%"));
+                filterParams.add("phone=" + filter.getPhone());
             }
             if (filter.getAge() != null) {
                 predicates.add(cb.equal(root.get("age"), filter.getAge()));
+                filterParams.add("age=" + filter.getAge());
             }
             if (filter.getCourseFormat() != null) {
                 predicates.add(cb.equal(root.get("courseFormat"), filter.getCourseFormat()));
+                filterParams.add("courseFormat=" + filter.getCourseFormat());
             }
             if (filter.getCourseType() != null) {
                 predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
+                filterParams.add("courseType=" + filter.getCourseType());
             }
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
             Date startDate = null;
@@ -172,6 +195,7 @@ public class PaidController {
             if (filter.getStartDate() != null) {
                 try {
                     startDate = dateFormat.parse(filter.getStartDate());
+                    filterParams.add("startDate=" + startDate);
                 } catch (ParseException e) {
                 }
             }
@@ -182,6 +206,7 @@ public class PaidController {
                     c.setTime(endDate);
                     c.add(Calendar.DATE, 1);
                     endDate = c.getTime();
+                    filterParams.add("endDate=" + endDate);
                 } catch (ParseException e) {
                 }
             }
@@ -193,10 +218,6 @@ public class PaidController {
             } else if (endDate != null) {
                 predicates.add(cb.lessThan(root.get("createdAt"), endDate));
             }
-
-
-
-
             if (filter.getStatus() != null) {
                 List<Status> allowedStatuses = Arrays.asList(Status.AGREE, Status.DISAGREE, Status.NEW, Status.WORKING, Status.DOUBLE);
                 try {
@@ -204,13 +225,14 @@ public class PaidController {
                     if (!allowedStatuses.contains(status)) {
                         return new ResponseEntity<>("Invalid status. Allowed statuses are: " + allowedStatuses, HttpStatus.BAD_REQUEST);
                     }
+                    filterParams.add("status=" + status);
                     predicates.add(cb.equal(root.get("status"), status));
                 } catch (IllegalArgumentException e) {
                     return new ResponseEntity<>("Invalid status. Allowed statuses are: " + allowedStatuses, HttpStatus.BAD_REQUEST);
                 }
             }
 
-
+            String filters = String.join("&", filterParams);
             cq.where(predicates.toArray(new Predicate[0]));
 
             if (order.startsWith("-")) {
@@ -230,6 +252,13 @@ public class PaidController {
             Long count = em.createQuery(countQuery).getSingleResult();
 
             Page<Paid> results = new PageImpl<>(resultList, pageable, count);
+            String botResponse = user.getEmail() + " get all paid" + " in page " + page + ". Filters: " + filters;
+            message.setText(botResponse);
+            try {
+                bot.execute(message);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
             return new ResponseEntity<>(results, HttpStatus.OK);
         }
 
@@ -280,6 +309,7 @@ public class PaidController {
         CriteriaQuery<Paid> cq = cb.createQuery(Paid.class);
         Root<Paid> root = cq.from(Paid.class);
         List<Predicate> predicates = new ArrayList<>();
+        Long id = filter.getId();
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
@@ -525,6 +555,15 @@ public class PaidController {
         Paid paid = paidRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("paid not found"));
         Object principal = authentication.getPrincipal();
+        String botResponse = user.getEmail() + " change paid "+ id+  " "+ "in time " + LocalDateTime.now();
+        message.setChatId(chat_id);
+        message.setText(botResponse);
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+
 
         if (principal instanceof UserDetails) {
             String currentUser = ((UserDetailsImpl) principal).getEmail();

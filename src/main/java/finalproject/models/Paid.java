@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 public class Paid {
@@ -64,6 +65,18 @@ public class Paid {
     @JoinColumn(name = "manager_id")
     private User user;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Paid paid = (Paid) o;
+        return Objects.equals(id, paid.id) && Objects.equals(course, paid.course) && Objects.equals(name, paid.name) && Objects.equals(surname, paid.surname) && Objects.equals(email, paid.email) && Objects.equals(phone, paid.phone) && Objects.equals(age, paid.age) && Objects.equals(courseFormat, paid.courseFormat) && Objects.equals(courseType, paid.courseType) && Objects.equals(createdAt, paid.createdAt) && status == paid.status && Objects.equals(group, paid.group) && Objects.equals(utm, paid.utm) && Objects.equals(message, paid.message) && Objects.equals(comments, paid.comments) && Objects.equals(sum, paid.sum) && Objects.equals(alreadyPaid, paid.alreadyPaid) && Objects.equals(user, paid.user);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, course, name, surname, email, phone, age, courseFormat, courseType, createdAt, status, group, utm, message, comments, sum, alreadyPaid, user);
+    }
 
     public Long getId() {
         return id;

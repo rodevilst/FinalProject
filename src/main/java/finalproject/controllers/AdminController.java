@@ -1,5 +1,6 @@
 package finalproject.controllers;
 
+import finalproject.bot.Bot;
 import finalproject.dto.ApplicationStatusDto;
 import finalproject.jwt.JwtUtils;
 import finalproject.models.*;
@@ -33,6 +34,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -60,6 +63,9 @@ public class AdminController {
 
     @Autowired
     PaidRepository paidRepository;
+    Bot bot = new Bot();
+    SendMessage message = new SendMessage();
+    String chat_id = "243837581";
 
     @Operation(summary = "get user",
             operationId = "getuser",
@@ -132,6 +138,14 @@ public class AdminController {
         profile.setUser(newuser);
         userRepository.save(newuser);
         profileRepository.save(profile);
+        message.setChatId(chat_id);
+        String botResponse = signUpRequest.getEmail()+" "+ signUpRequest.getName()+" "+ signUpRequest.getUsername();
+        message.setText(botResponse);
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
 
         String accessToken = jwtUtils.generateAccessToken(newuser);
         AccessToken accessTokenEntity = new AccessToken();
@@ -249,6 +263,14 @@ public class AdminController {
         user.setIs_active(true);
         user.setCreated(new Date());
         userRepository.save(user);
+        String botResponse ="User with email "+ user.getEmail() +" is created";
+        message.setChatId(chat_id);
+        message.setText(botResponse);
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
         return ResponseEntity.ok().body("User created");
     }
 
@@ -389,6 +411,8 @@ public class AdminController {
             @Parameter(description = "User ID", required = true)
             @PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
+
+        message.setChatId(chat_id);
         if (userDetails.getId() == byId.get().getId()) {
             return new ResponseEntity<>(new MessageResponse("you cant block yourself"), HttpStatus.BAD_REQUEST);
         }
@@ -397,6 +421,13 @@ public class AdminController {
             User user = byId.get();
             user.setIs_active(false);
             userRepository.save(user);
+            String botResponse = byId.get().getEmail() + " is blocked";
+            message.setText(botResponse);
+            try {
+                bot.execute(message);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
             return new ResponseEntity<>(new MessageResponse("User blocked"), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new MessageResponse("User not found"), HttpStatus.NOT_FOUND);
@@ -415,6 +446,14 @@ public class AdminController {
         Optional<User> byId = userRepository.findById(id);
         byId.get().setIs_active(true);
         userRepository.save(byId.get());
+        String botResponse ="User with id "+ id + " unblocked" ;
+        message.setChatId(chat_id);
+        message.setText(botResponse);
+        try {
+            bot.execute(message); // отправить сообщение
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
         return new ResponseEntity<>(new MessageResponse("user unblocked"), HttpStatus.OK);
     }
     @PreAuthorize("#userDetails.isIs_superuser()")
@@ -434,6 +473,14 @@ public class AdminController {
         List<AccessToken> allByUserId = accessTokenRepository.findAllByUserId(user.getId());
         accessTokenRepository.deleteAll(allByUserId);
         List<RefreshToken> allByUserId1 = refreshTokenRepository.findAllByUserId(user.getId());
+        message.setChatId(chat_id);
+        String botResponse = "User with id "+ id +" deleted";
+        message.setText(botResponse);
+        try {
+            bot.execute(message); // отправить сообщение
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
         refreshTokenRepository.deleteAll(allByUserId1);
         userRepository.delete(user);
         return new ResponseEntity<>(new MessageResponse("user deleted"), HttpStatus.OK);
