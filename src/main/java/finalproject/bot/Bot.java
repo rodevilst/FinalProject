@@ -1,7 +1,11 @@
 package finalproject.bot;
 
+import finalproject.controllers.AuthController;
+import finalproject.pojo.LoginRequest;
+import org.springframework.http.ResponseEntity;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -33,71 +37,50 @@ public class Bot extends TelegramLongPollingBot {
             if (text.equals("/start")) {
                 SendMessage message = new SendMessage();
                 message.setChatId(update.getMessage().getChatId());
-                message.setText("Выберите цвет:");
-
-                ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-                keyboardMarkup.setSelective(true);
-                keyboardMarkup.setResizeKeyboard(true);
-                keyboardMarkup.setOneTimeKeyboard(false);
-
-                List<KeyboardRow> keyboard = new ArrayList<>();
-                KeyboardRow row1 = new KeyboardRow();
-                row1.add(new KeyboardButton("Красный"));
-                row1.add(new KeyboardButton("Зеленый"));
-                keyboard.add(row1);
-
-                KeyboardRow row2 = new KeyboardRow();
-                row2.add(new KeyboardButton("Синий"));
-                row2.add(new KeyboardButton("Желтый"));
-                keyboard.add(row2);
-
-                keyboardMarkup.setKeyboard(keyboard);
-                message.setReplyMarkup(keyboardMarkup);
-
+                message.setText("Введите логин");
                 try {
-                    execute(message); // отправить сообщение
+                    execute(message); // отправляем сообщение с запросом логина пользователю
                 } catch (TelegramApiException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
-            } else if (text.equals("Красный")) {
+
+            } else if (text != null) {
+                // получаем логин пользователя
+                String login = text;
+
+                // отправляем сообщение с запросом пароля пользователю
                 SendMessage message = new SendMessage();
                 message.setChatId(update.getMessage().getChatId());
-                message.setText("Ты выбрал красный");
+                message.setText("Введите пароль");
                 try {
                     execute(message);
                 } catch (TelegramApiException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
-            } else if (text.equals("Зеленый")) {
-                SendMessage message = new SendMessage();
-                message.setChatId(update.getMessage().getChatId());
-                message.setText("Ты выбрал зеленый");
+
+                // получаем пароль пользователя
+                String password = update.getMessage().getText();
+
+                // создаем объект AuthController и вызываем метод authUser
+                AuthController authController = new AuthController();
+                LoginRequest loginRequest = new LoginRequest();
+                loginRequest.setEmail(login);
+                loginRequest.setPassword(password);
+                authController.authUser(loginRequest);
+
+                boolean isAuthenticated = authController.authUser(loginRequest).getStatusCode().is2xxSuccessful();
+
+                // отправляем сообщение о результате аутентификации
+                message.setText(isAuthenticated ? "Вы успешно авторизованы" : "Неверный логин или пароль");
                 try {
                     execute(message);
                 } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            } else if (text.equals("Синий")) {
-                SendMessage message = new SendMessage();
-                message.setChatId(update.getMessage().getChatId());
-                message.setText("Ты выбрал синий");
-                try {
-                    execute(message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            } else if (text.equals("Желтый")) {
-                SendMessage message = new SendMessage();
-                message.setChatId(update.getMessage().getChatId());
-                message.setText("Ты выбрал желтый");
-                try {
-                    execute(message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
             }
         }
     }
+
 
 
 

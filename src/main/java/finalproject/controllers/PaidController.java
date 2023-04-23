@@ -572,6 +572,8 @@ public class PaidController {
 
             paid.setStatus(Status.WORKING);
             paid.setUser(byEmail);
+
+
             if (paid == null) {
                 return ResponseEntity.badRequest().build();
             }
@@ -579,16 +581,19 @@ public class PaidController {
                 paid.setCourse(filter.getCourse());
                 checkUserAndSave(paid, byEmail);
             }
-            if (filter != null &&filter.getGroup() != null) {
-                Group byName = groupRepository.findByName(filter.getName());
-                if (paid.getGroup() == null) {
+            if (filter != null && filter.getGroup() != null) {
+                Group byName = groupRepository.findByName(filter.getGroup());
+                if (byName != null) {
                     paid.setGroup(byName);
+                    checkUserAndSave(paid, byEmail);
+                } else {
+                    List<Group> allGroups = groupRepository.findAll();
+                    String errorMessage = "Group not found. Available groups: " +
+                            allGroups.stream().map(Group::getName).collect(Collectors.joining(", "));
+                    return ResponseEntity.badRequest().body(errorMessage);
                 }
-                if (paid.getGroup() != null) {
-                    paid.setGroup(byName);
-                }
-                checkUserAndSave(paid, byEmail);
             }
+
             if (filter != null &&filter.getName() != null) {
                 paid.setName(filter.getName());
                 checkUserAndSave(paid, byEmail);
@@ -601,19 +606,31 @@ public class PaidController {
                 paid.setEmail(filter.getEmail());
                 checkUserAndSave(paid, byEmail);
             }
-            if (filter != null &&filter.getPhone() != null) {
-                paid.setPhone(filter.getPhone());
-                checkUserAndSave(paid, byEmail);
+            if (filter != null && filter.getPhone() != null) {
+                String phoneNumber = filter.getPhone();
+                if (isValidUkrainianPhoneNumber(phoneNumber)) {
+                    paid.setPhone(phoneNumber);
+                    checkUserAndSave(paid, byEmail);
+                } else {
+                    String examplePhoneNumber = "+380501234567";
+                    return ResponseEntity.badRequest().body("Invalid phone number format. Please enter a valid Ukrainian phone number, for example: " + examplePhoneNumber);
+                }
             }
+
             if (filter.getGroup() != null) {
                 Group byName = groupRepository.findByName(filter.getGroup());
                 paid.setGroup(byName);
                 checkUserAndSave(paid,byEmail);
             }
-            if (filter != null &&filter.getAge() != null) {
-                paid.setAge(filter.getAge());
+            if (filter != null && filter.getAge() != null) {
+                Integer age = filter.getAge();
+                if (age < 16 || age > 100) {
+                    return ResponseEntity.badRequest().body("Возраст должен быть между 16 и 100 годами.");
+                }
+                paid.setAge(age);
                 checkUserAndSave(paid, byEmail);
             }
+
             if (filter != null &&filter.getCourseFormat() != null) {
                 paid.setCourseFormat(filter.getCourseFormat());
                 checkUserAndSave(paid, byEmail);
@@ -642,10 +659,22 @@ public class PaidController {
                 }
                 checkUserAndSave(paid, byEmail);
             }
-            if (filter != null &&filter.getAlreadyPaid() != null) {
-                paid.setAlreadyPaid(filter.getAlreadyPaid());
+            if (filter != null && filter.getAlreadyPaid() != null) {
+                int alreadyPaid = filter.getAlreadyPaid();
+                String alreadyPaidStr = Integer.toString(alreadyPaid);
+                for (int i = 0; i < alreadyPaidStr.length(); i++) {
+                    if (!Character.isDigit(alreadyPaidStr.charAt(i))) {
+                        return ResponseEntity.badRequest().body("Already paid value must be a number");
+                    }
+                }
+                paid.setAlreadyPaid(alreadyPaid);
                 checkUserAndSave(paid, byEmail);
             }
+
+
+
+
+
             if (filter != null &&filter.getComment() != null) {
                 Comment comment1 = new Comment();
                 comment1.setComment(filter.getComment());
@@ -677,18 +706,36 @@ public class PaidController {
             })
     @PreAuthorize("#user.is_active")
     @PostMapping("/group")
-    public ResponseEntity<?> createGroup(@RequestBody Group group,@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> createGroup(@RequestBody Group group, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
         String name = group.getName();
 
-        if (name == null || name.isEmpty()) {
-            return ResponseEntity.badRequest().body("Group name is required");
+        if (name == null || name.isEmpty() || name.length() > 10 || name.contains(" ") || !name.matches(".*[a-zA-Z].*")) {
+            if (name == null || name.isEmpty()) {
+                return ResponseEntity.badRequest().body("Group name is required");
+            }
+            if (name.length() > 10) {
+                return ResponseEntity.badRequest().body("Group name must be 10 characters or less");
+            }
+            if (name.contains(" ")) {
+                return ResponseEntity.badRequest().body("Group name should not contain spaces");
+            }
+            if (!name.matches(".*[a-zA-Z0-9_].*") || name.matches("[^a-zA-Z0-9_]+")) {
+                return ResponseEntity.badRequest().body("Group name is invalid");
+            }
+            if (!name.matches(".*[a-zA-Z].*")) {
+                return ResponseEntity.badRequest().body("Group name must contain at least one letter");
+            }
         }
+
         Group newGroup = new Group();
         newGroup.setName(name);
         Group savedGroup = groupRepository.save(newGroup);
 
         return ResponseEntity.ok(savedGroup);
     }
+
+
+
 
     @Operation(summary = "Get all groups",
             operationId = "GetAllGroups",
@@ -712,6 +759,10 @@ public class PaidController {
             paid.setUser(byEmail);
             paidRepository.save(paid);
         }
+    }
+    private boolean isValidUkrainianPhoneNumber(String phoneNumber) {
+        // Проверяем, соответствует ли номер телефона формату +380XXXXXXXXX
+        return phoneNumber.matches("^\\+380\\d{9}$");
     }
 
 

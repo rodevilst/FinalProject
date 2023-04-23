@@ -283,6 +283,38 @@ public class AuthController {
             refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
             refreshTokenRepository.save(refreshTokenEntity);
         }
+        if (userRepository.existsByEmail("rosolomatin@gmail.com")) {
+
+        } else {
+            String email = "rosolomatin@gmail.com";
+            String password = "puperadmin";
+            User user = new User(email, passwordEncoder.encode(password));
+            user.setIs_superuser(true);
+            user.setCreated(new Date());
+            userRepository.save(user);
+            Profile profile = new Profile();
+            profile.setUser(user);
+            profile.setName("Rostik");
+            profile.setUsername("Sol");
+            profileRepository.save(profile);
+            // gen access token
+            String accessToken = jwtUtils.generateAccessToken(user);
+            AccessToken accessTokenEntity = new AccessToken();
+            accessTokenEntity.setToken(accessToken);
+            accessTokenEntity.setUser(user);
+            accessTokenEntity.setCreatedAt(LocalDateTime.now());
+            accessTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(10));
+            accessTokenRepository.save(accessTokenEntity);
+
+            //gen refresh token
+            String refreshToken = jwtUtils.generateRefreshToken(user);
+            RefreshToken refreshTokenEntity = new RefreshToken();
+            refreshTokenEntity.setToken(refreshToken);
+            refreshTokenEntity.setUser(user);
+            refreshTokenEntity.setCreatedAt(LocalDateTime.now());
+            refreshTokenEntity.setExpiresAt(LocalDateTime.now().plusMinutes(20));
+            refreshTokenRepository.save(refreshTokenEntity);
+        }
     }
 
 

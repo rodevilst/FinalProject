@@ -408,31 +408,34 @@ public class AdminController {
     })
     @PatchMapping("/block/{id}")
     public ResponseEntity<MessageResponse> blockUserById(
-            @Parameter(description = "User ID", required = true)
-            @PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
+            @Parameter(description = "User ID", required = true) @PathVariable long id,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
 
         message.setChatId(chat_id);
-        if (userDetails.getId() == byId.get().getId()) {
-            return new ResponseEntity<>(new MessageResponse("you cant block yourself"), HttpStatus.BAD_REQUEST);
-        }
-
-        if (byId.isPresent()) {
-            User user = byId.get();
-            user.setIs_active(false);
-            userRepository.save(user);
-            String botResponse = byId.get().getEmail() + " is blocked";
-            message.setText(botResponse);
-            try {
-                bot.execute(message);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-            return new ResponseEntity<>(new MessageResponse("User blocked"), HttpStatus.OK);
-        } else {
+        if (!byId.isPresent()) {
             return new ResponseEntity<>(new MessageResponse("User not found"), HttpStatus.NOT_FOUND);
         }
+
+        if (userDetails.getId() == byId.get().getId()) {
+            return new ResponseEntity<>(new MessageResponse("You can't block yourself"), HttpStatus.BAD_REQUEST);
+        }
+
+        User user = byId.get();
+        user.setIs_active(false);
+        userRepository.save(user);
+
+        String botResponse = byId.get().getEmail() + " is blocked";
+        message.setText(botResponse);
+        try {
+            bot.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+
+        return new ResponseEntity<>(new MessageResponse("User blocked"), HttpStatus.OK);
     }
+
 
     @PreAuthorize("#userDetails.isIs_superuser()")
     @Operation(summary = "Unblock user",
@@ -442,8 +445,11 @@ public class AdminController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/unblock/{id}")
-    public ResponseEntity<?> UnblockUser(@PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public ResponseEntity<?> unblockUserById(@PathVariable long id, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl userDetails) {
         Optional<User> byId = userRepository.findById(id);
+        if (!byId.isPresent()) {
+            return new ResponseEntity<>(new MessageResponse("User not found"), HttpStatus.NOT_FOUND);
+        }
         byId.get().setIs_active(true);
         userRepository.save(byId.get());
         String botResponse ="User with id "+ id + " unblocked" ;
@@ -454,8 +460,9 @@ public class AdminController {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-        return new ResponseEntity<>(new MessageResponse("user unblocked"), HttpStatus.OK);
+        return new ResponseEntity<>(new MessageResponse("User unblocked"), HttpStatus.OK);
     }
+
     @PreAuthorize("#userDetails.isIs_superuser()")
     @Operation(summary = "delete user",
             description = "delete the user", responses = {
@@ -477,7 +484,7 @@ public class AdminController {
         String botResponse = "User with id "+ id +" deleted";
         message.setText(botResponse);
         try {
-            bot.execute(message); // отправить сообщение
+            bot.execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
