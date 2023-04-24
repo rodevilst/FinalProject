@@ -166,41 +166,6 @@ public class AdminController {
         return new ResponseEntity<>(accessTokenEntity, HttpStatus.CREATED);
     }
 
-    //    @Operation(summary = "Access token",
-//            description = "Refreshes an existing access token by generating a new one and deleting the old one.",
-//            operationId = "accessToken",
-//            responses = {
-//                    @ApiResponse(responseCode = "200", description = "OK",
-//                            content = @Content(mediaType = "application/json",
-//                                    schema = @Schema(implementation = TokenWrapper.class))),
-//                    @ApiResponse(responseCode = "400", description = "Bad request - invalid access token")
-//            })
-//    @PostMapping("/users/recreate")
-//    @PreAuthorize("#userDetails.isIs_superuser()")
-//    public ResponseEntity<?> accessToken(@RequestBody TokenWrapper tokenWrapper, @AuthenticationPrincipal UserDetailsImpl userDetails) {
-//        String accessToken = tokenWrapper.getToken();
-//        AccessToken byToken = accessTokenRepository.findByToken(accessToken);
-//        if (byToken == null) {
-//            return new ResponseEntity<>("Invalid access token", HttpStatus.BAD_REQUEST);
-//        }
-//
-//        User user = byToken.getUser();
-//        String newAccessTokenJwt = jwtUtils.generateAccessToken(user);
-//
-//        LocalDateTime now = LocalDateTime.now();
-//        AccessToken oldAccessToken = accessTokenRepository.findByUserAndExpiresAtAfter(user, now);
-//        if (oldAccessToken != null) {
-//            accessTokenRepository.delete(oldAccessToken);
-//        }
-//
-//        AccessToken newAccessToken = new AccessToken();
-//        newAccessToken.setToken(newAccessTokenJwt);
-//        newAccessToken.setUser(user);
-//        newAccessToken.setExpiresAt(LocalDateTime.now().plusMinutes(10));
-//        accessTokenRepository.save(newAccessToken);
-//
-//        return ResponseEntity.ok(new TokenWrapper(newAccessTokenJwt));
-//    }
     @Operation(summary = "Access token",
             description = "Generate new token for registration",
             operationId = "accessToken",
@@ -261,6 +226,7 @@ public class AdminController {
         user.setPassword(passwordEncoder.encode(password));
         System.out.println(password);
         user.setIs_active(true);
+        user.setIs_blocked(false);
         user.setCreated(new Date());
         userRepository.save(user);
         String botResponse ="User with email "+ user.getEmail() +" is created";
@@ -423,6 +389,7 @@ public class AdminController {
 
         User user = byId.get();
         user.setIs_active(false);
+        user.setIs_blocked(true);
         userRepository.save(user);
 
         String botResponse = byId.get().getEmail() + " is blocked";
@@ -451,6 +418,7 @@ public class AdminController {
             return new ResponseEntity<>(new MessageResponse("User not found"), HttpStatus.NOT_FOUND);
         }
         byId.get().setIs_active(true);
+        byId.get().setIs_blocked(false);
         userRepository.save(byId.get());
         String botResponse ="User with id "+ id + " unblocked" ;
         message.setChatId(chat_id);

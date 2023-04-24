@@ -25,6 +25,7 @@ public class User {
     private String password;
     private boolean is_active;
     private boolean is_superuser;
+    private boolean is_blocked;
     private Date last_login;
     private Date created;
     private Date updated;
@@ -52,26 +53,28 @@ public class User {
         this.password = password;
     }
 
-    public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated, Collection<Role> roles) {
+    public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser,boolean is_blocked, Date last_login, Date created, Date updated, Collection<Role> roles) {
         this.id = id;
         this.email = email;
         this.profile = profile;
         this.password = password;
         this.is_active = is_active;
         this.is_superuser = is_superuser;
+        this.is_blocked = is_blocked;
         this.last_login = last_login;
         this.created = created;
         this.updated = updated;
         this.roles = roles;
     }
 
-    public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser, Date last_login, Date created, Date updated) {
+    public User(long id, String email, Profile profile, String password, boolean is_active, boolean is_superuser ,boolean is_blocked, Date last_login, Date created, Date updated) {
         this.id = id;
         this.email = email;
         this.profile = profile;
         this.password = password;
         this.is_active = is_active;
         this.is_superuser = is_superuser;
+        this.is_blocked = is_blocked;
         this.last_login = last_login;
         this.created = created;
         this.updated = updated;
@@ -91,6 +94,13 @@ public class User {
         this.is_superuser = is_superuser;
     }
 
+    public boolean isIs_blocked() {
+        return is_blocked;
+    }
+
+    public void setIs_blocked(boolean is_blocked) {
+        this.is_blocked = is_blocked;
+    }
 
     public long getId() {
         return id;

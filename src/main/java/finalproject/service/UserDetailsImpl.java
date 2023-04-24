@@ -22,16 +22,18 @@ public class UserDetailsImpl implements UserDetails {
     private Profile profile;
     private boolean is_active;
     private boolean is_superuser;
+    private boolean is_blocked;
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String email, String password, Profile profile, boolean is_active, boolean is_superuser, Collection<? extends GrantedAuthority> authorities) {
+    public UserDetailsImpl(Long id, String email, String password, Profile profile, boolean is_active, boolean is_superuser,boolean is_blocked, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.profile = profile;
         this.is_active = is_active;
         this.is_superuser = is_superuser;
+        this.is_blocked = is_blocked;
         this.authorities = authorities;
     }
 
@@ -47,7 +49,16 @@ public class UserDetailsImpl implements UserDetails {
                 user.getProfile(),
                 user.isIs_active(),
                 user.isIs_superuser(),
+                user.isIs_blocked(),
                 authorities);
+    }
+
+    public boolean isIs_blocked() {
+        return is_blocked;
+    }
+
+    public void setIs_blocked(boolean is_blocked) {
+        this.is_blocked = is_blocked;
     }
 
     public boolean isIs_active() {

@@ -29,6 +29,8 @@ public class JwtResponse {
     @Schema(description = "Whether the user is a superuser", example = "false")
     private boolean is_superuser;
 
+    private boolean is_blocked;
+
     @Schema(description = "Date of last login", example = "2022-02-28T14:23:10.123Z")
     private Date last_login;
 
@@ -73,6 +75,14 @@ public class JwtResponse {
     }
 
     public JwtResponse() {
+    }
+
+    public boolean isIs_blocked() {
+        return is_blocked;
+    }
+
+    public void setIs_blocked(boolean is_blocked) {
+        this.is_blocked = is_blocked;
     }
 
     public void setId(Long id) {

@@ -118,6 +118,7 @@ public class AuthController {
                     .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
             user.setLast_login(new Date());
+            user.setIs_blocked(false);
             userRepository.save(user);
 
             String accessTokenJwt = jwtUtils.generateAccessToken(user);
@@ -259,6 +260,7 @@ public class AuthController {
             User user = new User(email, passwordEncoder.encode(password));
             user.setIs_superuser(true);
             user.setCreated(new Date());
+            user.setIs_blocked(false);
             userRepository.save(user);
             Profile profile = new Profile();
             profile.setUser(user);
@@ -291,6 +293,7 @@ public class AuthController {
             User user = new User(email, passwordEncoder.encode(password));
             user.setIs_superuser(true);
             user.setCreated(new Date());
+            user.setIs_blocked(false);
             userRepository.save(user);
             Profile profile = new Profile();
             profile.setUser(user);
