@@ -612,7 +612,7 @@ public class PaidController {
                     paid.setPhone(phoneNumber);
                     checkUserAndSave(paid, byEmail);
                 } else {
-                    String examplePhoneNumber = "+380501234567";
+                    String examplePhoneNumber = "380501234567";
                     return ResponseEntity.badRequest().body("Invalid phone number format. Please enter a valid Ukrainian phone number, for example: " + examplePhoneNumber);
                 }
             }
@@ -761,9 +761,10 @@ public class PaidController {
         }
     }
     private boolean isValidUkrainianPhoneNumber(String phoneNumber) {
-        // Проверяем, соответствует ли номер телефона формату +380XXXXXXXXX
-        return phoneNumber.matches("^\\+380\\d{9}$");
+        // Проверяем, соответствует ли номер телефона формату 380XXXXXXXXX
+        return phoneNumber.matches("^380\\d{9}$");
     }
+
 
 
 }
