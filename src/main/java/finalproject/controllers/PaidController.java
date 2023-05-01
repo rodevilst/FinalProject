@@ -593,15 +593,26 @@ public class PaidController {
                     return ResponseEntity.badRequest().body(errorMessage);
                 }
             }
+            if (filter != null && filter.getName() != null) {
+                String name = filter.getName();
+                if (name.matches("[a-zA-Zа-яА-Я\\s]+")) {
+                    paid.setName(name);
+                    checkUserAndSave(paid, byEmail);
+                } else {
+                    return ResponseEntity.badRequest().body("Invalid name format. Please enter a name with only letters and dashes.");
+                }
+            }
 
-            if (filter != null &&filter.getName() != null) {
-                paid.setName(filter.getName());
-                checkUserAndSave(paid, byEmail);
+            if (filter != null && filter.getSurname() != null) {
+                String surname = filter.getSurname();
+                if (surname.matches("[a-zA-Zа-яА-Я\\s]+")) {
+                    paid.setSurname(surname);
+                    checkUserAndSave(paid, byEmail);
+                } else {
+                    return ResponseEntity.badRequest().body("Invalid surname format. Please enter a surname with only letters and dashes.");
+                }
             }
-            if (filter != null &&filter.getSurname() != null) {
-                paid.setSurname(filter.getSurname());
-                checkUserAndSave(paid, byEmail);
-            }
+
             if (filter != null &&filter.getEmail() != null) {
                 paid.setEmail(filter.getEmail());
                 checkUserAndSave(paid, byEmail);
