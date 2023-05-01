@@ -680,6 +680,7 @@ public class PaidController {
                 comment1.setComment(filter.getComment());
                 comment1.setCreated_at(new Date());
                 comment1.setPaid(paid);
+                comment1.setUser(byEmail);
                 commentRepository.save(comment1);
                 checkUserAndSave(paid, byEmail);
 
