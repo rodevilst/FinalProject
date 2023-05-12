@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -100,10 +101,10 @@ public class AuthController {
         }
         User byEmail = userRepository.findByEmail(email).orElseThrow(SecurityException::new);
 
-        if (!byEmail.isIs_active()){
-            return new ResponseEntity<>(new MessageResponse("you are blocked"),HttpStatus.BAD_REQUEST);
+        if (byEmail.isIs_blocked()){
+            User byEmail1 = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(SecurityException::new);
+            return new ResponseEntity<>(byEmail1,HttpStatus.OK);
         }
-
         if (StringUtils.isBlank(password)) {
             return ResponseEntity.badRequest().body("password can`t be null");
         }
@@ -138,7 +139,7 @@ public class AuthController {
                 accessTokenRepository.save(newAccessToken);
                 return ResponseEntity.ok(createJwtResponse(user, newAccessTokenJwt, refreshToken.getToken()));
             }
-            if (accessToken != null) {
+            if (accessToken != null && refreshToken !=null){
                 JwtResponse jwtResponse = createJwtResponse(user, accessToken.getToken(), refreshToken.getToken());
                 return ResponseEntity.ok(jwtResponse);
             }
@@ -158,7 +159,6 @@ public class AuthController {
                 JwtResponse jwtResponse = createJwtResponse(user, newAccessToken.getToken(), newRefreshToken.getToken());
                 return ResponseEntity.ok(jwtResponse);
             }
-
             if (refreshToken != null) {
                 AccessToken newAccessToken = createAccessToken(user, accessTokenJwt);
                 refreshToken.setToken(refreshTokenJwt);

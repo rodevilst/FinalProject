@@ -3,6 +3,7 @@ package finalproject.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -10,7 +11,7 @@ public class Comment {
     @Id
     private long id;
     private String comment;
-    private Date created_at;
+    private LocalDate created_at;
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -27,13 +28,13 @@ public class Comment {
         this.user = user;
     }
 
-    public Comment(long id, String comment, Date created_at) {
+    public Comment(long id, String comment, LocalDate created_at) {
         this.id = id;
         this.comment = comment;
         this.created_at = created_at;
     }
 
-    public Comment(long id, String comment, Date created_at, User user, Paid paid) {
+    public Comment(long id, String comment, LocalDate created_at, User user, Paid paid) {
         this.id = id;
         this.comment = comment;
         this.created_at = created_at;
@@ -68,11 +69,11 @@ public class Comment {
         this.comment = comment;
     }
 
-    public Date getCreated_at() {
+    public LocalDate getCreated_at() {
         return created_at;
     }
 
-    public void setCreated_at(Date created_at) {
+    public void setCreated_at(LocalDate created_at) {
         this.created_at = created_at;
     }
 }

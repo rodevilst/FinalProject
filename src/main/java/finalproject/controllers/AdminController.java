@@ -223,6 +223,15 @@ public class AdminController {
         AccessToken byToken = accessTokenRepository.findByToken(token);
         User user = byToken.getUser();
         String password = activateUser.getPassword();
+        if (activateUser.getPassword().isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error : Password is empty"));
+        } else if (activateUser.getPassword().length() < 8 || activateUser.getPassword().length() > 16) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Error: Invalid password"));
+        }
         user.setPassword(passwordEncoder.encode(password));
         System.out.println(password);
         user.setIs_active(true);

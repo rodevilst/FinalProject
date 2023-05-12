@@ -148,7 +148,7 @@ public class PaidController {
             if (filter.getId() != null) {
                 filterParams.add("id=" + filter.getId());
                 if (!paidRepository.existsById(filter.getId())) {
-                    return new ResponseEntity<>(new MessageResponse("Entity with id " + filter.getId() + " not found"),HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(new MessageResponse("Entity with id " + filter.getId() + " not found"), HttpStatus.NOT_FOUND);
                 }
                 predicates.add(cb.equal(root.get("id"), filter.getId()));
             }
@@ -550,12 +550,12 @@ public class PaidController {
     @PreAuthorize("#user.is_active")
     @SecurityRequirement(name = "JWT")
     public ResponseEntity<?> setPaidParam(
-            @PathVariable long id, Authentication authentication, @Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl user, @RequestBody(required = false) PaidFilter filter) {
+            @PathVariable long id, Authentication authentication, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user, @RequestBody(required = false) PaidFilter filter) {
 
         Paid paid = paidRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("paid not found"));
         Object principal = authentication.getPrincipal();
-        String botResponse = user.getEmail() + " change paid "+ id+  " "+ "in time " + LocalDateTime.now();
+        String botResponse = user.getEmail() + " change paid " + id + " " + "in time " + LocalDateTime.now();
         message.setChatId(chat_id);
         message.setText(botResponse);
         try {
@@ -613,7 +613,7 @@ public class PaidController {
                 }
             }
 
-            if (filter != null &&filter.getEmail() != null) {
+            if (filter != null && filter.getEmail() != null) {
                 paid.setEmail(filter.getEmail());
                 checkUserAndSave(paid, byEmail);
             }
@@ -631,7 +631,7 @@ public class PaidController {
             if (filter.getGroup() != null) {
                 Group byName = groupRepository.findByName(filter.getGroup());
                 paid.setGroup(byName);
-                checkUserAndSave(paid,byEmail);
+                checkUserAndSave(paid, byEmail);
             }
             if (filter != null && filter.getAge() != null) {
                 Integer age = filter.getAge();
@@ -642,19 +642,19 @@ public class PaidController {
                 checkUserAndSave(paid, byEmail);
             }
 
-            if (filter != null &&filter.getCourseFormat() != null) {
+            if (filter != null && filter.getCourseFormat() != null) {
                 paid.setCourseFormat(filter.getCourseFormat());
                 checkUserAndSave(paid, byEmail);
             }
-            if (filter != null &&filter.getCourseType() != null) {
+            if (filter != null && filter.getCourseType() != null) {
                 paid.setCourseType(filter.getCourseType());
                 checkUserAndSave(paid, byEmail);
             }
-            if (filter != null &&filter.getSum() != null) {
+            if (filter != null && filter.getSum() != null) {
                 paid.setSum(filter.getSum());
                 checkUserAndSave(paid, byEmail);
             }
-            if (filter != null &&filter.getStatus() != null) {
+            if (filter != null && filter.getStatus() != null) {
                 if (filter.getStatus().toUpperCase().equals(Status.AGREE.toString())) {
                     paid.setStatus(Status.AGREE);
                 } else if (filter.getStatus().toUpperCase().equals(Status.WORKING.toString())) {
@@ -683,13 +683,11 @@ public class PaidController {
             }
 
 
-
-
-
-            if (filter != null &&filter.getComment() != null) {
+            if (filter != null && filter.getComment() != null) {
+                LocalDate date = LocalDate.now();
                 Comment comment1 = new Comment();
                 comment1.setComment(filter.getComment());
-                comment1.setCreated_at(new Date());
+                comment1.setCreated_at(date);
                 comment1.setPaid(paid);
                 comment1.setUser(byEmail);
                 commentRepository.save(comment1);
@@ -747,8 +745,6 @@ public class PaidController {
     }
 
 
-
-
     @Operation(summary = "Get all groups",
             operationId = "GetAllGroups",
             responses = {
@@ -758,7 +754,7 @@ public class PaidController {
             })
     @PreAuthorize("#user.is_active")
     @GetMapping("/group")
-    public ResponseEntity<?> getAllGroup(@Parameter(hidden = true)@AuthenticationPrincipal UserDetailsImpl user) {
+    public ResponseEntity<?> getAllGroup(@Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImpl user) {
         List<Group> all = groupRepository.findAll();
         return new ResponseEntity<>(all, HttpStatus.OK);
     }
@@ -772,11 +768,11 @@ public class PaidController {
             paidRepository.save(paid);
         }
     }
+
     private boolean isValidUkrainianPhoneNumber(String phoneNumber) {
         // Проверяем, соответствует ли номер телефона формату 380XXXXXXXXX
         return phoneNumber.matches("^380\\d{9}$");
     }
-
 
 
 }
