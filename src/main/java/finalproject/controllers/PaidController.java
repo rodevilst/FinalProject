@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -593,19 +594,18 @@ public class PaidController {
                     return ResponseEntity.badRequest().body(errorMessage);
                 }
             }
-            if (filter != null && filter.getName() != null) {
+            if (filter != null) {
                 String name = filter.getName();
-                if (name.matches("[a-zA-Zа-яА-Я\\s]+")) {
+                if (StringUtils.isBlank(name) || name.matches("^[a-zA-Zа-яА-ЯёЁґҐєЄіїІЇ -]{1,20}$")) {
                     paid.setName(name);
                     checkUserAndSave(paid, byEmail);
                 } else {
                     return ResponseEntity.badRequest().body("Invalid name format. Please enter a name with only letters and dashes.");
                 }
             }
-
             if (filter != null && filter.getSurname() != null) {
                 String surname = filter.getSurname();
-                if (surname.matches("[a-zA-Zа-яА-Я\\s]+")) {
+                if (StringUtils.isBlank(surname) || surname.matches("^[a-zA-Zа-яА-ЯёЁґҐєЄіїІЇ -]{1,20}$")) {
                     paid.setSurname(surname);
                     checkUserAndSave(paid, byEmail);
                 } else {
@@ -614,12 +614,17 @@ public class PaidController {
             }
 
             if (filter != null && filter.getEmail() != null) {
-                paid.setEmail(filter.getEmail());
-                checkUserAndSave(paid, byEmail);
+                String email = filter.getEmail();
+                if (StringUtils.isBlank(email) || email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+                    paid.setEmail(email);
+                    checkUserAndSave(paid, byEmail);
+                } else {
+                    return ResponseEntity.badRequest().body("Invalid email format. Please enter a valid email address.");
+                }
             }
             if (filter != null && filter.getPhone() != null) {
                 String phoneNumber = filter.getPhone();
-                if (isValidUkrainianPhoneNumber(phoneNumber)) {
+                if (StringUtils.isBlank(phoneNumber) || isValidUkrainianPhoneNumber(phoneNumber)) {
                     paid.setPhone(phoneNumber);
                     checkUserAndSave(paid, byEmail);
                 } else {

@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 
@@ -48,6 +49,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class AuthController {
     @Autowired
     AuthenticationManager authenticationManager;
+
 
     @Autowired
     UserRepository userRepository;
