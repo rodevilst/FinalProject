@@ -1,4 +1,4 @@
-package finalproject.dto;
+package finalproject.Filter.dto;
 
 public class ApplicationStatusDto {
     private int TotalCount;

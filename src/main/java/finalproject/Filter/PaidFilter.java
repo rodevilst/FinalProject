@@ -21,7 +21,6 @@ public class PaidFilter {
     private Integer sum;
     private Integer alreadyPaid;
     private User user;
-
     private String startDate;
     private String endDate;
     private String comment;

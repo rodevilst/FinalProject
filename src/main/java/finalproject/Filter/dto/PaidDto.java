@@ -1,4 +1,4 @@
-package finalproject.dto;
+package finalproject.Filter.dto;
 
 import finalproject.models.Group;
 
