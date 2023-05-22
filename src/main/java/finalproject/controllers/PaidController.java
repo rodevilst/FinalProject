@@ -335,7 +335,7 @@ public class PaidController {
             if (filter.getCourseType() != null) {
                 predicates.add(cb.equal(root.get("courseType"), filter.getCourseType()));
             }
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date startDate = null;
             Date endDate = null;
             if (filter.getStartDate() != null) {
@@ -347,6 +347,10 @@ public class PaidController {
             if (filter.getEndDate() != null) {
                 try {
                     endDate = dateFormat.parse(filter.getEndDate());
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(endDate);
+                    calendar.add(Calendar.DAY_OF_MONTH, 1);
+                    endDate = calendar.getTime();
                 } catch (ParseException e) {
                 }
             }
@@ -356,9 +360,8 @@ public class PaidController {
             } else if (startDate != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
             } else if (endDate != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+                predicates.add(cb.lessThan(root.get("createdAt"), endDate));
             }
-
 
             if (filter.getStatus() != null) {
                 List<Status> allowedStatuses = Arrays.asList(Status.AGREE, Status.DISAGREE, Status.NEW, Status.WORKING, Status.DOUBLE);
