@@ -1,16 +1,20 @@
+## Project Description
+
+The goal of this project is to create a platform that allows users to submit and manage requests, view and edit them, as well as track statistics related to these requests. The application serves as a centralized hub for processing user requests and tracking their progress, providing a streamlined and organized approach to managing user interactions.
+
+In this project, I utilized various technologies to implement a backend server that provides a RESTful API for processing user requests. The technologies used include Spring Boot, Spring Data JPA, and MySQL for database management. Additionally, I used Postman for testing and Swagger UI for API documentation.
+
+### Project Run Requirements
 To run the project, Java version 1.8 or higher is required.
 
-Download the project's jar file from https://drive.google.com/drive/folders/1wLT4YaB-8-hboHx0SfHjuykwS9u3Eu2I
-Launch the application by running the command java -jar "<jar-file-name>".
-The API documentation is available at: http://localhost:6060/swagger-ui.html
+### Run Instructions
+1. Download the project's jar file from the link: [Download jar file](https://drive.google.com/drive/folders/1wLT4YaB-8-hboHx0SfHjuykwS9u3Eu2I)
+2. Launch the application by running the command: `java -jar "<jar-file-name>"`
 
-Postman collection link: https://api.postman.com/collections/22098491-8924aa9d-63ee-4c32-9ef1-8d6d737c035a?access_key=PMAT-01GW226VXYKK1DPAXYMB87QHYB
-Superuser login credentials:
-email: superadmin@gmail.com
-password: superadmin
+### Documentation and Testing
+* The API documentation is available at: [Swagger UI](http://localhost:6060/swagger-ui.html)
+* Postman collection for testing: [Collection Link](https://api.postman.com/collections/22098491-8924aa9d-63ee-4c32-9ef1-8d6d737c035a?access_key=PMAT-01GW226VXYKK1DPAXYMB87QHYB)
 
-The goal of my project is to create a platform for users to submit and manage requests, view and edit them, and track statistics related to those requests.
-The application serves as a centralized hub for processing user requests and tracking their progress, providing a streamlined and organized approach to managing user interactions.
-In this project, I utilized various technologies to implement a backend server that provides a RESTful API for processing user requests.
-The technologies used include Spring Boot, Spring Data JPA, and MySQL for the database management.
-Additionally, I used Postman for testing and Swagger UI for API documentation.
+### Superuser Credentials
+* Email: superadmin@gmail.com
+* Password: superadmin
